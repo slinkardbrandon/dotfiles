@@ -1,4 +1,21 @@
 
+# Settings
+# Easy toggle of antigen logger
+# ANTIGEN_LOG="~/Desktop/antigen.log"
+
+export DOTFILES="${HOME}/.files"
+export EDITOR=code
+export TZ=America/Chicago
+
+# Is antigen installed?
+if [ ! -d "${HOME}/.antigen" ]; then
+  # Nope! Install it.
+  curl -L git.io/antigen > "${HOME}/.antigen.zsh"
+fi
+
+# Register additional `builtin`commands
+eval $(thefuck --alias)
+
 # Functions
 
 ## Prettify the interface to online reference manuals
