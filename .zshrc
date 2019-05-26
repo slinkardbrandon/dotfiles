@@ -13,6 +13,21 @@ if [ ! -d "${HOME}/.antigen" ]; then
   curl -L git.io/antigen > "${HOME}/.antigen.zsh"
 fi
 
+# Setup antigen bundles
+antigen bundle robbyrussell/oh-my-zsh lib/
+antigen bundle git
+antigen bundle zsh-users/zsh-syntax-highlighting
+antigen bundle zsh-users/zsh-autosuggestions
+antigen bundle zsh-users/zsh-completions
+antigen bundle zsh-users/zsh-history-substring-search
+antigen bundle rupa/z
+antigen bundle lukechilds/zsh-nvm
+
+## Theme
+antigen theme KalebHawkins/ohmyzsh-IGeek-OSX
+
+antigen apply
+
 # Register additional `builtin`commands
 eval $(thefuck --alias)
 
@@ -33,3 +48,31 @@ function man() {
          PATH="$HOME/bin:$PATH" \
              man "$@"
 }
+# Create a branch from the most recent 'develop' branch
+function branch() { git fetch && git checkout develop && git pull && git checkout -b "$@" ;}
+
+# Squash all commits that are not current with the 'develop' branch
+function squash() {
+  local GIT_BRANCH=$(git branch | grep \* | cut -d ' ' -f2);
+
+  echo $GIT_BRANCH;
+
+  git fetch;
+  git checkout develop
+  git pull;
+  git checkout $GIT_BRANCH;
+  git reset --soft develop;
+  git add .;
+  git commit -m $@;
+}
+
+# Aliases
+
+## Kill all running docker containers
+alias dnuke='docker stop $(docker ps -a -q) > /dev/null'
+
+## Jump to dotfiles.
+alias dotfiles="cd ${DOTFILES}"
+
+## Get my IP Address.
+alias ip="curl ifconfig.co"
