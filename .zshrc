@@ -66,6 +66,10 @@ function squash() {
   git commit -m $@;
 }
 
+# Stop and remove all docker containers
+alias ddestroy='docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)'
+
+
 # Aliases
 
 ## Kill all running docker containers
