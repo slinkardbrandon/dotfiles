@@ -1,21 +1,18 @@
+source ~/.antigen.zsh
 
 # Settings
 # Easy toggle of antigen logger
 # ANTIGEN_LOG="~/Desktop/antigen.log"
 
-export DOTFILES="${HOME}/.files"
+export DOTFILES="~/.files"
 export EDITOR=code
 export TZ=America/Chicago
-
-# Is antigen installed?
-if [ ! -d "${HOME}/.antigen" ]; then
-  # Nope! Install it.
-  curl -L git.io/antigen > "${HOME}/.antigen.zsh"
-fi
 
 # Setup antigen bundles
 antigen bundle robbyrussell/oh-my-zsh lib/
 antigen bundle git
+# Guess what to install when running an unknown command.
+antigen bundle command-not-found
 antigen bundle zsh-users/zsh-syntax-highlighting
 antigen bundle zsh-users/zsh-autosuggestions
 antigen bundle zsh-users/zsh-completions
@@ -53,14 +50,10 @@ function branch() { git fetch && git checkout develop && git pull && git checkou
 
 # Squash all commits that are not current with the 'develop' branch
 function squash() {
-  local GIT_BRANCH=$(git branch | grep \* | cut -d ' ' -f2);
-
-  echo $GIT_BRANCH;
-
   git fetch;
   git checkout develop
   git pull;
-  git checkout $GIT_BRANCH;
+  git checkout $(git branch | grep \* | cut -d ' ' -f2);
   git reset --soft develop;
   git add .;
   git commit -m $@;
