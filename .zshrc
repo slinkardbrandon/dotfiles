@@ -50,12 +50,19 @@ function branch() { git fetch && git checkout develop && git pull && git checkou
 
 # Squash all commits that are not current with the 'develop' branch
 function squash() {
+  local BRANCH="$(git branch | grep \* | cut -d ' ' -f2)"
+
   git fetch;
   git checkout develop
   git pull;
-  git checkout $(git branch | grep \* | cut -d ' ' -f2);
+  echo "Checking out $BRANCH"
+  git checkout $BRANCH
   git reset --soft develop;
   git add .;
+  git commit -m $@;
+}
+
+function gc() {
   git commit -m $@;
 }
 
