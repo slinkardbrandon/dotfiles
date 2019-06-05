@@ -80,3 +80,6 @@ alias dotfiles="cd ${DOTFILES}"
 
 ## Get my IP Address.
 alias ip="curl ifconfig.co"
+
+# Spooky witch knows all
+alias witch="which"
