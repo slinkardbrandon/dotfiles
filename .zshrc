@@ -63,22 +63,39 @@ function squash() {
   git commit -m $@;
 }
 
+# Git commit
 function gc() {
   git commit -m $@;
 }
 
+# Git add
 function ga() {
   git add $@;
 }
 
+# Move an npm package to dependencies
 function npmProd() {
   npm uninstall $@;
   npm i $@;
 }
 
+# Move a npm package to dev dependencies
 function npmDev() {
   npm uninstall $@;
   npm i -D $@;
+}
+
+# Build and run a docker image, tag it based on current working directory
+function drun() {
+  # Use parameter expansion magic to get the current folder
+  local dir=${PWD##*/}
+  local runningImages=$(docker ps --filter "ancestor=${dir}" --format "{{.ID}}")
+
+  echo "Stopping running images matching name: ${dir}"
+  echo "Stopped container(s): $(docker stop ${runningImages})\n"
+
+  # Build the image, tag it based on current folder and run the image as a container
+  docker build -t ${dir} . && docker run -idt ${dir};
 }
 
 # Stop and remove all docker containers
