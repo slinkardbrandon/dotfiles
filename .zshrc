@@ -86,6 +86,9 @@ function npmDev() {
 }
 
 # Build and run a docker image, tag it based on current working directory
+# Optionally accepts a single argument of port.
+# Example:
+# drun 9000:9001 => map port 9001 of the docker container to port 9000 of the working machine
 function drun() {
   # Use parameter expansion magic to get the current folder
   local dir=${PWD##*/}
@@ -95,7 +98,14 @@ function drun() {
   echo "Stopped container(s): $(docker stop ${runningImages})\n"
 
   # Build the image, tag it based on current folder and run the image as a container
-  docker build -t ${dir} . && docker run -idt ${dir};
+  docker build -t ${dir} .
+
+  if [ $# -eq 0 ]
+  then
+    docker run -idt ${dir}
+  else
+    docker run -idt -p $1 ${dir}
+  fi
 }
 
 # Stop and remove all docker containers
