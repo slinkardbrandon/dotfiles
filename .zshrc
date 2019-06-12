@@ -7,6 +7,7 @@ source ~/.antigen.zsh
 export DOTFILES="~/.files"
 export EDITOR=code
 export TZ=America/Chicago
+export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"
 
 # Setup antigen bundles
 antigen bundle robbyrussell/oh-my-zsh lib/
@@ -64,6 +65,20 @@ function squash() {
 
 function gc() {
   git commit -m $@;
+}
+
+function ga() {
+  git add $@;
+}
+
+function npmProd() {
+  npm uninstall $@;
+  npm i $@;
+}
+
+function npmDev() {
+  npm uninstall $@;
+  npm i -D $@;
 }
 
 # Stop and remove all docker containers
