@@ -63,14 +63,19 @@ function squash() {
   git commit -m $@;
 }
 
+# Git add
+function ga() {
+  git add $@;
+}
+
 # Git commit
 function gc() {
   git commit -m $@;
 }
 
-# Git add
-function ga() {
-  git add $@;
+# Git status
+function gs() {
+  git status;
 }
 
 # Move an npm package to dependencies
