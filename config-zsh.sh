@@ -7,7 +7,7 @@ setupAntigen () {
     echo -e "Looks like antigen is already installed!"
   else
     echo -e "Installing antigen"
-    curl -L git.io/antigen > "~/.antigen.zsh"
+    curl -sL https://raw.githubusercontent.com/zsh-users/antigen/master/bin/antigen.zsh > ~/.antigen.zsh
   fi
 
 }
