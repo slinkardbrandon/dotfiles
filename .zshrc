@@ -8,6 +8,7 @@ export DOTFILES="~/.files"
 export EDITOR=code
 export TZ=America/Chicago
 export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"
+export PATH=$PATH:~/go/bin
 
 # Setup antigen bundles
 antigen bundle robbyrussell/oh-my-zsh lib/

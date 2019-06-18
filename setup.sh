@@ -88,10 +88,27 @@ main () {
     do
     read -p "Would you like to configure git? [n] " answer
     answer=${answer:-n}
-    
+
     case $answer in
     [yY]* ) echo -e "\nConfiguring Git\n"
             "$ROOT/config-git.sh"
+            break;;
+
+    [nN] )  break;;
+    * )     echo "Please enter Y or N.";
+            break;;
+    esac
+    done
+
+    # Setup Golang development environment
+    while true
+    do
+    read -p "Would you like to setup Golang? [n] " answer
+    answer=${answer:-n}
+
+    case $answer in
+    [yY]* ) echo -e "\nSetting up Go\n"
+            "$ROOT/setup-go.sh"
             break;;
 
     [nN] )  break;;
@@ -105,7 +122,7 @@ main () {
     do
     read -p "Would you like to setup Corsair utilities? [n] " answer
     answer=${answer:-n}
-    
+
     case $answer in
     [yY]* ) echo -e "\nSetting up Corsair Utilities\n"
             "$ROOT/setup-corsair-utilities.sh"
