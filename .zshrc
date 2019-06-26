@@ -114,14 +114,16 @@ function drun() {
   fi
 }
 
-# Stop and remove all docker containers
-alias ddestroy='docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)'
-
-
 # Aliases
 
 ## Kill all running docker containers
 alias dnuke='docker stop $(docker ps -a -q) > /dev/null'
+
+# Stop and remove all docker containers
+alias ddestroy='docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)'
+
+# Prune docker into the dirt
+alias dprune="docker prune -af --volumes"
 
 ## Jump to dotfiles.
 alias dotfiles="cd ${DOTFILES}"
