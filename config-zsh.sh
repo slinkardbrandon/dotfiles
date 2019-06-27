@@ -3,7 +3,7 @@ set -e
 
 setupAntigen () {
 
-  if [ -f ~/.antigen.zsh ]; then 
+  if [ -f ~/.antigen.zsh ]; then
     echo -e "Looks like antigen is already installed!"
   else
     echo -e "Installing antigen"
@@ -17,7 +17,8 @@ copyZshrc () {
   setupAntigen
 
   echo -e '\nCopying in `.zshrc`\n'
-  cp $(pwd)/.zshrc ~/.zshrc
+
+  ln -sf $(pwd)/zshrc ~/.zshrc
 
   echo -e 'Applying changes from zshrc';
   # Switch to using zsh from bash

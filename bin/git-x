@@ -1,0 +1,8 @@
+#! /usr/bin/env bash
+
+# Make a file stored in git executable
+main() {
+  git update-index --chmod=+x $@
+}
+
+main "$@"

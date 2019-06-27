@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-ROOT="$(pwd)"
+ROOT="$HOME/.files"
 
 # COLOR_NC='\e[0m' # No Color
 # COLOR_WHITE='\e[1;37m'
@@ -26,6 +26,10 @@ echo -e "==== Setup Script Reporting for Duty ===="
 echo -e "=========================================\n"
 
 main () {
+
+    echo -e "Moving directory to ~/.files";
+    mv $(pwd) $ROOT
+
     "$ROOT/symlink-common.sh"
 
     # If we're on a Mac
