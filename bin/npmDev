@@ -1,0 +1,9 @@
+#! /usr/bin/env bash
+
+# Move a npm package to dev dependencies
+main() {
+  npm uninstall $@;
+  npm i -D $@;
+}
+
+main "$@"

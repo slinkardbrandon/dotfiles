@@ -1,0 +1,7 @@
+#! /usr/bin/env bash
+
+main() {
+  git commit -m $@;
+}
+
+main "$@"

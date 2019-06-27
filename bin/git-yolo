@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Courtesy of Josh Manders (https://github.com/joshmanders/dotfiles/blob/master/bin/git-yolo)
+
+main () {
+  local message=$(curl -s http://whatthecommit.com/index.txt)
+  git save "$message"
+}
+
+main "$@"

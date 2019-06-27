@@ -1,0 +1,8 @@
+#! /usr/bin/env bash
+
+# Stop and remove all docker containers
+main() {
+  docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q)
+}
+
+main "$@"
