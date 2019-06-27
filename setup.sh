@@ -25,10 +25,22 @@ echo -e "\n========================================="
 echo -e "==== Setup Script Reporting for Duty ===="
 echo -e "=========================================\n"
 
+
+setupGitRemote() {
+    git init
+    git add .
+    git remote add origin https://github.com/slinkardbrandon/dotfiles.git
+    git remote update
+    git checkout master
+}
+
 main () {
 
     echo -e "Moving directory to ~/.files";
     mv $(pwd) $ROOT
+
+    cd $ROOT
+    setupGitRemote
 
     "$ROOT/symlink-common.sh"
 
