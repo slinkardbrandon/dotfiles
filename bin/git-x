@@ -2,6 +2,7 @@
 
 # Make a file stored in git executable
 main() {
+  chmod +x $@
   git update-index --chmod=+x $@
 }
 
