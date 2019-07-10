@@ -1,8 +1,0 @@
-#! /usr/bin/env bash
-
-# Jump to dotfiles
-main() {
-  cd ${DOTFILES}
-}
-
-main "$@"

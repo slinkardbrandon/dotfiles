@@ -31,5 +31,8 @@ antigen theme KalebHawkins/ohmyzsh-IGeek-OSX
 
 antigen apply
 
+# Load aliases.
+source ${DOTFILES}/aliases
+
 # Register additional `builtin`commands
 eval $(thefuck --alias)
