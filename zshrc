@@ -9,11 +9,8 @@ export EDITOR=code
 export TZ=America/Chicago
 export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"
 
-# Go-lang PATH.
-export GOPATH="${HOME}/go"
-
 # Add vars to path
-export PATH="${PATH}:${GOPATH}/bin"
+export PATH="${PATH}:${HOME}/go/bin"
 export PATH="${PATH}:${DOTFILES}/bin"
 export PATH="${PATH}:${LOCAL_NODE_MODULES_BIN}"
 
