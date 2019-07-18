@@ -116,17 +116,16 @@ main () {
     esac
     done
 
-    # Setup Golang development environment
+    # Configure Homebrew
     while true
     do
-    read -p "Would you like to setup Golang? [n] " answer
+    read -p "Would you like to setup brew use the public brewfile? [n] " answer
     answer=${answer:-n}
 
     case $answer in
-    [yY]* ) echo -e "\nSetting up Go\n"
-            "$ROOT/setup-go.sh"
+    [yY]* ) echo -e '\nConfiguring Brew\n'
+            "$ROOT/setup-homebrew.sh"
             break;;
-
     [nN] )  break;;
     * )     echo "Please enter Y or N.";
             break;;

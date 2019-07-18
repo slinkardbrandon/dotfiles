@@ -10,7 +10,7 @@ export TZ=America/Chicago
 export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"
 
 # Add vars to path
-export PATH=$PATH:$HOME/go/bin
+export PATH="${PATH}:${HOME}/go/bin"
 export PATH="${PATH}:${DOTFILES}/bin"
 export PATH="${PATH}:${LOCAL_NODE_MODULES_BIN}"
 
@@ -30,6 +30,9 @@ antigen bundle lukechilds/zsh-nvm
 antigen theme KalebHawkins/ohmyzsh-IGeek-OSX
 
 antigen apply
+
+# Load aliases.
+source ${DOTFILES}/aliases
 
 # Register additional `builtin`commands
 eval $(thefuck --alias)
