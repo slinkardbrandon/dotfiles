@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 
 main () {
-  git save "feature: $@"
+  local files=("${@}")
+  local length=${#files[@]}
+  local message=${files[$(($length - 1))]}
+  unset files[${#files[@]}-1]
+
+  if [ ${#files[@]} -eq 0 ]; then
+    git add -A
+    git commit -m "feature: ${message}"
+  else
+    git add ${files[@]}
+    git commit -m "feature: ${message}"
+  fi
 }
 
 main "$@"
