@@ -25,6 +25,8 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
     zsh-users/zsh-completions
     rupa/z
     zsh-users/zsh-history-substring-search
+    chrissicool/zsh-256color
+    unixorn/autoupdate-zgen
     unixorn/bitbucket-git-helpers.plugin.zsh
 EOPLUGINS
   # ^ can't indent this EOPLUGINS
