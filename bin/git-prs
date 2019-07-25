@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# This command relies directly on the unixorn/bitbucket-git-helpers.plugin.zsh plugin
+main() {
+  git-bb-list-pull-requests
+}
+
+main "$@"
