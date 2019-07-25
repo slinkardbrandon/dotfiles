@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-# This command relies directly on the unixorn/bitbucket-git-helpers.plugin.zsh plugin
 main() {
+  local gitRemote=$(git remote get-url $(git remote))
+  local currentBranch="$(git branch | grep \* | cut -d ' ' -f2)"
+  echo -e "Creating PR for $currentBranch on $gitRemote"
+
+  # This command relies directly on the unixorn/bitbucket-git-helpers.plugin.zsh plugin
   git-bb-create-pull-request
 }
 
