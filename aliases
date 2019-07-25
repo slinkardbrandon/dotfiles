@@ -1,3 +1,4 @@
 alias dotfiles="cd ${DOTFILES}"
 alias f="fuck"
 alias n="npm"
+alias nr="npm run"
