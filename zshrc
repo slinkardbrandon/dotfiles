@@ -18,6 +18,7 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
   # plugins
   zgen oh-my-zsh plugins/git
   zgen oh-my-zsh plugins/command-not-found
+  zgen oh-my-zsh plugins/magic-enter
 
   zgen loadall <<EOPLUGINS
     zsh-users/zsh-syntax-highlighting
