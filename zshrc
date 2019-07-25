@@ -1,4 +1,3 @@
-zmodload zsh/zprof
 
 # Load zgen only if a user types a zgen command
 zgen () {
@@ -17,8 +16,8 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
 
   # plugins
   zgen oh-my-zsh plugins/git
+  zgen oh-my-zsh plugins/jira
   zgen oh-my-zsh plugins/command-not-found
-  zgen oh-my-zsh plugins/magic-enter
 
   zgen loadall <<EOPLUGINS
     zsh-users/zsh-syntax-highlighting
@@ -26,7 +25,6 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
     zsh-users/zsh-completions
     rupa/z
     zsh-users/zsh-history-substring-search
-    chrissicool/zsh-256color
     unixorn/autoupdate-zgen
     unixorn/bitbucket-git-helpers.plugin.zsh
     djui/alias-tips
@@ -53,6 +51,7 @@ export DOTFILES="$HOME/.files"
 export EDITOR=code
 export TZ=America/Chicago
 export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"
+export JIRA_URL="https://jira.cl.glhec.org"
 
 # Add vars to path
 export PATH="${PATH}:${HOME}/go/bin"
