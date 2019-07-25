@@ -28,6 +28,7 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
     chrissicool/zsh-256color
     unixorn/autoupdate-zgen
     unixorn/bitbucket-git-helpers.plugin.zsh
+    djui/alias-tips
 EOPLUGINS
   # ^ can't indent this EOPLUGINS
 
