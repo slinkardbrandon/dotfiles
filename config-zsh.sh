@@ -1,20 +1,30 @@
 #!/usr/bin/env bash
 set -e
 
-setupAntigen () {
+uninstallAntigen () {
+  if [ -f ${HOME}/.antigen.zsh ]; then
+    echo -e "Removing antigen plugin manager"
+    rm -rf ${HOME}/.antigen.zsh
+  fi
+}
 
-  if [ -f ~/.antigen.zsh ]; then
-    echo -e "Looks like antigen is already installed!"
+cloneZGen () {
+
+  if [ -f ${HOME}/.zgen/zgen.zsh ]; then
+    echo -e "Looks like zgen is already cloned!"
   else
-    echo -e "Installing antigen"
-    curl -sL https://raw.githubusercontent.com/zsh-users/antigen/master/bin/antigen.zsh > ~/.antigen.zsh
+    echo -e "Cloning zgen"
+    git clone https://github.com/tarjoilija/zgen.git "${HOME}/.zgen"
   fi
 
 }
 
-copyZshrc () {
-  # Setup antigen before copying in zshrc as I enjoy several antigen bundles :D
-  setupAntigen
+setupZsh () {
+  # Uninstall antigen if it's on the machine because it's heckin chonky
+  uninstallAntigen
+
+  # Setup zgen before copying in zshrc as I enjoy several zgen bundles :D
+  cloneZGen
 
   echo -e '\nCopying in `.zshrc`\n'
 
@@ -37,7 +47,7 @@ main () {
       answer=${answer:-n}
 
       case $answer in
-      [yY]* ) copyZshrc
+      [yY]* ) setupZsh
               break;;
       [nN] )  break;;
       * )     echo "Please enter Y or N.";
@@ -46,7 +56,7 @@ main () {
       done
 
   else
-    copyZshrc
+    setupZsh
   fi
 }
 

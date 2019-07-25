@@ -1,1 +1,2 @@
 alias dotfiles="cd ${DOTFILES}"
+alias f="fuck"
