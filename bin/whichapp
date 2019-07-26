@@ -19,7 +19,7 @@ main() {
   # Warn about /Volumes/... paths, because applications launched from mounted
   # devices aren't persistently installed.
   if [[ $fullPath == /Volumes/* ]]; then
-    echo "NOTE: Application is not persistently installed, due to being located on a mounted volume." >&2 
+    echo "NOTE: Application is not persistently installed, due to being located on a mounted volume." >&2
   fi
 }
 
