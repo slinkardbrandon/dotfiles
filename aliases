@@ -1,5 +1,6 @@
 alias dotfiles="cd ${DOTFILES}"
 alias .files="dotfiles"
+alias g="git"
 alias f="fuck"
 alias n="npm"
 alias nr="npm run"
