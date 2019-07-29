@@ -90,6 +90,9 @@ export TZ=America/Chicago
 export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"
 export JIRA_URL="https://jira.cl.glhec.org"
 
+# Disable homebrew auto updates
+export HOMEBREW_NO_AUTO_UPDATE=1
+
 # Add vars to path
 export PATH="${PATH}:${HOME}/go/bin"
 export PATH="${PATH}:${DOTFILES}/bin"
