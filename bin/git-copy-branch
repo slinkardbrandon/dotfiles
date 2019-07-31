@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+main () {
+  local branch=$(git rev-parse --abbrev-ref HEAD)
+  echo $branch | pbcopy
+}
+
+main "$@"
