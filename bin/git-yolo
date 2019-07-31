@@ -5,7 +5,7 @@
 main () {
   local message=$(curl -s http://whatthecommit.com/index.txt)
   git save "$message"
-  git push
+  git push --no-verify
 }
 
 main "$@"
