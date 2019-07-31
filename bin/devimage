@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-function devimage {
+function main {
    local dir=${PWD##*/}
    docker build . -t "localhost:5000/velocity-test/${dir}:latest"
    docker push "localhost:5000/velocity-test/${dir}:latest"
 }
+
+main "$@"
