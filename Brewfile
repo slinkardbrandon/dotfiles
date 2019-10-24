@@ -5,6 +5,7 @@ brew "go"
 brew "vim"
 brew "postgresql"
 brew "wget"
+brew "jq"
 
 cask "postico"
 cask "1password"
