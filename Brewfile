@@ -6,6 +6,7 @@ brew "vim"
 brew "postgresql"
 brew "wget"
 
+cask "1password"
 cask "microsoft-teams"
 cask "font-fira-code"
 cask "brave-browser"
