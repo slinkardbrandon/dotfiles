@@ -8,6 +8,7 @@ brew "wget"
 
 cask "postico"
 cask "1password"
+cask "microsoft-office"
 cask "microsoft-teams"
 cask "font-fira-code"
 cask "brave-browser"
