@@ -2,6 +2,7 @@ tap "homebrew/cask"
 tap "caskroom/cask"
 tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
+tap "homebrew/core"
 
 brew "go"
 brew "vim"
