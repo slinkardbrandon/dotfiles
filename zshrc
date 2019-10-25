@@ -104,5 +104,7 @@ source ${DOTFILES}/aliases
 # Register additional `builtin`commands
 eval $(thefuck --alias)
 
-export SMARTYSTREETS_AUTH_ID="9da813da-b877-0a46-22f7-3a6bff4cb86e"
-export SMARTYSTREETS_AUTH_TOKEN="iyxDvPo4UrS55Z1ZLbqh"
+for f in ./not_credentials/*.env; do
+  echo -e "Sourcing some non-credentials for ${f}"
+  source ${f}
+done
