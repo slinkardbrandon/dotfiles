@@ -85,6 +85,7 @@ ZGEN_RESET_ON_CHANGE=(${HOME}/.zshrc)
 
 # Aliases
 export DOTFILES="$HOME/.files"
+export XDG_CONFIG_HOME="$HOME/.config"
 export EDITOR=code
 export TZ=America/Chicago
 export LOCAL_NODE_MODULES_BIN="./node_modules/.bin"

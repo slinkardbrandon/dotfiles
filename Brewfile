@@ -4,6 +4,7 @@ tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
 tap "homebrew/core"
 
+brew "fish"
 brew "go"
 brew "vim"
 brew "postgresql"
