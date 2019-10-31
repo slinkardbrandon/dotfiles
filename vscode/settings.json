@@ -60,7 +60,7 @@
   "editor.fontFamily": "Fira Code",
   "git.enableSmartCommit": true,
   "git.autofetch": true,
-  "powermode.enabled": false,
+  "powermode.enabled": true,
   "terminal.integrated.rendererType": "dom",
   "terminal.integrated.cursorStyle": "underline",
   "terminal.integrated.cursorBlinking": true,
