@@ -20,7 +20,7 @@ curl https://git.io/fisher --create-dirs -sLo $XDG_CONFIG_HOME/fish/functions/fi
 fish -c fisher
 
 # Add fish to default shells list
-sudo bash -c 'echo "/usr/local/bin/fish" >> /etc/shells'
+# sudo bash -c 'echo "/usr/local/bin/fish" >> /etc/shells'
 
 # Change fish to default shell
-chsh -s /usr/local/bin/fish
+# chsh -s /usr/local/bin/fish
