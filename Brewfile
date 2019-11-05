@@ -10,6 +10,7 @@ brew "vim"
 brew "postgresql"
 brew "wget"
 brew "jq"
+brew "thefuck"
 
 cask "postico"
 cask "spotify"
