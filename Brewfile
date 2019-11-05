@@ -12,6 +12,7 @@ brew "wget"
 brew "jq"
 brew "thefuck"
 brew "htop"
+brew "docker"
 
 cask "postico"
 cask "spotify"
