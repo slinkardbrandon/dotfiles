@@ -12,6 +12,7 @@ brew "wget"
 brew "jq"
 
 cask "postico"
+cask "spotify"
 cask "1password"
 cask "microsoft-office"
 cask "microsoft-teams"
