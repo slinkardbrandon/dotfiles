@@ -16,6 +16,10 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 # Disable press & hold for special characters and enable key repeat
 defaults write -g ApplePressAndHoldEnabled -bool false
 
+# Raise keyboard key repeat rate
+defaults write -g InitialKeyRepeat -int 10 # normal minimum is 15 (225 ms)
+defaults write -g KeyRepeat -int 1 # normal minimum is 2 (30 ms)
+
 # Always show scrollbars
 defaults write NSGlobalDomain AppleShowScrollBars -string "Always"
 # Possible values: `WhenScrolling`, `Automatic` and `Always`
