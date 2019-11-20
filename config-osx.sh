@@ -13,6 +13,9 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 # General OSX User Experience Changes                                         #
 ###############################################################################
 
+# Disable press & hold for special characters and enable key repeat
+defaults write -g ApplePressAndHoldEnabled -bool false
+
 # Always show scrollbars
 defaults write NSGlobalDomain AppleShowScrollBars -string "Always"
 # Possible values: `WhenScrolling`, `Automatic` and `Always`
