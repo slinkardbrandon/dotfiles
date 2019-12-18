@@ -105,7 +105,7 @@ source ${DOTFILES}/aliases
 # Register additional `builtin`commands
 eval $(thefuck --alias)
 
-for f in ./not_credentials/*.env; do
+for f in ${HOME}/.files/not_credentials/*.env; do
   echo -e "Sourcing some non-credentials for ${f}"
   source ${f}
 done
