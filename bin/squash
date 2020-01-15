@@ -11,7 +11,7 @@ main() {
   git checkout $BRANCH
   git reset --soft develop;
   git add .;
-  git commit -m $@;
+  git commit -m "$@";
 }
 
-main()
+main "$@"
