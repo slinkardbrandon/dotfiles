@@ -10,20 +10,15 @@ main() {
     days='1';
   fi
 
-  local requestBody='{"jql":"project in (VP,VO) AND updated >= -';
-
-  requestBody+=$days
-  requestBody+='d AND assignee = currentUser() order by updated DESC","startAt":0,"maxResults":10,"fields":["key","status","summary"]}';
+  local requestBody="{\"jql\":\"project in (VP,VO) AND updated >= -${days}d AND assignee = currentUser() order by updated DESC\",\"startAt\":0,\"maxResults\":10,\"fields\":[\"key\",\"status\",\"summary\"]}"
 
   echo -e "Fetching tickets modified in the last $days day(s) from $JIRA_URL\n\n"
-  echo '{"jql":"project in (VP,VO) AND updated >= -1d AND assignee = currentUser() order by updated DESC","startAt":0,"maxResults":10,"fields":["key","status","summary"]}'
-  echo $requestBody
 
   # Some day corp will give me an api key. RIP
   local ticketInformation=$(curl -u "${JIRA_USERNAME}:${NOT_CORP_PASSWORD}" \
     -X POST \
     -H "Content-Type: application/json" \
-    --data ${requestBody} \
+    --data "${requestBody}" \
     --silent \
     --show-error \
     "${JIRA_URL}/rest/api/2/search");
