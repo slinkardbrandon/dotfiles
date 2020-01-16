@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+main() {
+  local dayOfWeek=$(date '+%A')
+
+  # Some day corp will give me an api key. RIP
+  local ticketInformation=$(curl -u "${JIRA_USERNAME}:${NOT_CORP_PASSWORD}" \
+    -X POST \
+    -H "Content-Type: application/json" \
+    --data '{"jql":"project in (VP,VO) AND updated >= -1d AND assignee = currentUser() order by updated DESC","startAt":0,"maxResults":10,"fields":["key","status","summary"]}' \
+    --silent \
+    --show-error \
+    "https://jira.cl.glhec.org/rest/api/2/search");
+
+  echo -e "\033[1mYesterday\033[0m";
+  echo $ticketInformation | jq -r '.issues[] | { url: ("\u0009\u2022 " + .key), summary: (.fields.summary + . "\n") } | join(" - ")';
+
+  echo -e "\n\033[1mToday\033[0m";
+  # print tab (\11) then bullet point
+  printf "\11\342\200\242"
+
+  echo -e "\n\033[1mBlocks\033[0m";
+  # print tab (\11) then bullet point
+  printf "\11\342\200\242"
+
+  echo -e "\n"
+}
+
+main "$@"
