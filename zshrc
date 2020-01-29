@@ -65,6 +65,9 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
     # A Zsh plugin to help remembering those shell aliases and Git aliases you once defined.
     djui/alias-tips
 
+    # If kubectl cli is installed, add the completions as well
+    if [ $commands[kubectl] ]; then source <(kubectl completion zsh); fi
+
 EOPLUGINS
   # ^ can't indent this EOPLUGINS
 
