@@ -18,3 +18,9 @@ alias nrd="npm run down"
 alias nru="npm run up"
 alias nrud="npm run up:dependencies"
 alias nds="npm run down && npm start"
+
+# Kubernetes
+alias k="kubectl"
+alias kc="kubectl config"
+alias kcuc="kubectl config use-context"
+alias kccc="kubectl config current-context"
