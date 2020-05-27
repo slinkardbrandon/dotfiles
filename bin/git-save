@@ -10,10 +10,10 @@ function main () {
 
   if [ ${#files[@]} -eq 0 ]; then
     git add -A
-    git commit -m "${message}"
+    git commit -m "${message}" --no-verify
   else
     git add ${files[@]}
-    git commit -m "${message}"
+    git commit -m "${message}" --no-verify
   fi
 }
 
