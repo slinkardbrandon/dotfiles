@@ -18,6 +18,7 @@ alias nrd="npm run down"
 alias nru="npm run up"
 alias nrud="npm run up:dependencies"
 alias nds="npm run down && npm start"
+alias nrdu="npm run down && docker-compose pull && npm run up"
 
 # Kubernetes
 alias k="kubectl"
