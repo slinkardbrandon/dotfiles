@@ -1,0 +1,10 @@
+#! /usr/bin/env bash
+
+# Prune docker into the dirt
+main() {
+  docker stop $(docker ps -a -q)
+  docker rm $(docker ps -a -q)
+  docker system prune -af --volumes
+}
+
+main "$@"

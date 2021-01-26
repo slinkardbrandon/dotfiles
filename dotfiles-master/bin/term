@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+main() {
+  if whichapp iTerm; then
+    open -a iTerm "`pwd`"
+  else
+    open -a Terminal "`pwd`"
+  fi
+}
+
+main "$@"

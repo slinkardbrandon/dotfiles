@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+
+# Create a branch from the most recent 'develop' branch
+main() {
+  git fetch
+  git checkout develop
+  git pull
+  git checkout -b "$@"
+}
+
+main "$@"

@@ -1,0 +1,9 @@
+#! /usr/bin/env bash
+
+# Move an npm package to dependencies
+main () {
+  npm --no-git-tag-version version $@;
+  git save package.json package-lock.json "[Bump] $@"
+}
+
+main "$@"

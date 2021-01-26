@@ -1,0 +1,17 @@
+#! /usr/bin/env bash
+
+# Squash all commits that are not current with the 'develop' branch
+main() {
+  local BRANCH="$(git branch | grep \* | cut -d ' ' -f2)"
+
+  git fetch;
+  git checkout develop
+  git pull;
+  echo "Checking out $BRANCH"
+  git checkout $BRANCH
+  git reset --soft develop;
+  git add .;
+  git commit -m "$@";
+}
+
+main "$@"

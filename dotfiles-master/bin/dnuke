@@ -1,0 +1,8 @@
+#! /usr/bin/env bash
+
+# Kill all running docker containers
+main() {
+  docker stop $(docker ps -a -q) > /dev/null
+}
+
+main "$@"

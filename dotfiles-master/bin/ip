@@ -1,0 +1,8 @@
+#! /usr/bin/env bash
+
+# Get my IP Address
+main() {
+  curl ifconfig.co
+}
+
+main "$@"

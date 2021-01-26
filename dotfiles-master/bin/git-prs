@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  open "https://bitbucket.org/dashboard/pullrequests?section=teams"
+}
+
+main "$@"

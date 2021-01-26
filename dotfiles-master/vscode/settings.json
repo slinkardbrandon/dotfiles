@@ -1,0 +1,83 @@
+{
+  "editor.tabSize": 2,
+  "breadcrumbs.enabled": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "window.zoomLevel": 0,
+  "editor.formatOnSave": true,
+  "editor.copyWithSyntaxHighlighting": false,
+  "workbench.settings.editor": "json",
+  "javascript.implicitProjectConfig.checkJs": true,
+  "files.exclude": {
+    "**/.amplifi": false,
+    "**/.terraform": false,
+    "*terraform.tfstate*": false,
+    "**/test-reports": false,
+    "**/coverage": false
+  },
+  "editor.minimap.enabled": false,
+  "explorer.confirmDragAndDrop": false,
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#333"
+  },
+  "workbench.colorTheme": "Henna",
+  "workbench.iconTheme": "material-icon-theme",
+  // "jest.showCoverageOnLoad": true,
+  "cSpell.userWords": [
+    "Kubernetes",
+    "amplifi",
+    "antlr",
+    "be",
+    "card",
+    "connection",
+    "execa",
+    "gringots",
+    "isengard",
+    "jsonb",
+    "kubectl",
+    "moleculer",
+    "nelnet",
+    "npmrc",
+    "postgres",
+    "promisify",
+    "terraform",
+    "to",
+    "truthy",
+    "typeorm",
+    "unifi",
+    "unzipper",
+    "vcli"
+  ],
+  "editor.snippetSuggestions": "top",
+  "gitlens.codeLens.enabled": false,
+  "typescript.surveys.enabled": false,
+  "terminal.integrated.shell.osx": "/usr/local/bin/fish",
+  "terminal.integrated.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "terminal.integrated.fontSize": 11,
+  "editor.lineHeight": 32,
+  "editor.fontSize": 16,
+  "editor.fontFamily": "Fira Code",
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+  "powermode.enabled": false,
+  "terminal.integrated.rendererType": "dom",
+  "terminal.integrated.cursorStyle": "underline",
+  "terminal.integrated.cursorBlinking": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.tslint": true
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "antlr4.generation": {
+    "mode": "external",
+    "language": "JavaScript",
+    "listeners": true,
+    "visitors": false
+  },
+  "antlr4.referencesCodeLens.enabled": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
