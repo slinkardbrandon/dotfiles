@@ -39,7 +39,9 @@ main () {
         rm -rf "~/.files";
     fi
 
-    setupGitRemote
+    if [ ! -d .git ]; then
+        setupGitRemote
+    fi
 
     "$ROOT/symlink-common.sh"
 
