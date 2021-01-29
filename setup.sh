@@ -84,23 +84,6 @@ main () {
         esac
         done
 
-        # Setup OSX desktop apps
-        while true
-        do
-        read -p "Would you like to setup OSX desktop applications? [n] " answer
-        answer=${answer:-n}
-
-        case $answer in
-        [yY]* ) echo -e "\nSetting up OSX desktop applications\n"
-                "$ROOT/install-osx-desktop-apps.sh"
-                break;;
-
-        [nN] )  break;;
-        * )     echo "Please enter Y or N.";
-                break;;
-        esac
-        done
-
     fi
 
     # Configure Git
@@ -130,23 +113,6 @@ main () {
     [yY]* ) echo -e '\nConfiguring Brew\n'
             "$ROOT/setup-homebrew.sh"
             break;;
-    [nN] )  break;;
-    * )     echo "Please enter Y or N.";
-            break;;
-    esac
-    done
-
-    # Setup Corsair Utilities (muh RGB, macros, etc)
-    while true
-    do
-    read -p "Would you like to setup Corsair utilities? [n] " answer
-    answer=${answer:-n}
-
-    case $answer in
-    [yY]* ) echo -e "\nSetting up Corsair Utilities\n"
-            "$ROOT/setup-corsair-utilities.sh"
-            break;;
-
     [nN] )  break;;
     * )     echo "Please enter Y or N.";
             break;;
