@@ -42,8 +42,6 @@ main () {
         rm -rf "~/.files";
     fi
 
-    mv $(pwd) $ROOT
-
     cd $ROOT
     setupGitRemote
 
