@@ -11,6 +11,7 @@ alias y="yarn"
 alias yr="yarn run"
 alias ys="yarn start"
 alias yt="yarn test"
+alias yi="yarn add"
 
 # NPM aliases
 alias n="npm"
