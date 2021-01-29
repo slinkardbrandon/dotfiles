@@ -35,15 +35,10 @@ setupGitRemote() {
 }
 
 main () {
-    echo -e "Moving directory to ~/.files";
-
     if [ -d ~/.files ]; then
         rm -rf "~/.files";
     fi
 
-    mv $(pwd) $ROOT
-
-    cd $ROOT
     setupGitRemote
 
     "$ROOT/symlink-common.sh"
