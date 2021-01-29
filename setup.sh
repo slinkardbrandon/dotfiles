@@ -35,12 +35,13 @@ setupGitRemote() {
 }
 
 main () {
-    cd ~/
     echo -e "Moving directory to ~/.files";
 
     if [ -d ~/.files ]; then
         rm -rf "~/.files";
     fi
+
+    mv $(pwd) $ROOT
 
     cd $ROOT
     setupGitRemote
