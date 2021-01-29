@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-main() {
-  echo https://www.youtube.com/watch?v=kfVsfOSbJY0 | pbcopy
-}
-
-main "$@"

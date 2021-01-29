@@ -1,9 +1,0 @@
-[alias]
-	diff = diff --word-diff
-
-# Common
-	uncommit = reset --mixed HEAD~
-	unstage = reset  -q HEAD --
-	discard = checkout  --
-	unstash = stash pop
-	tree = log --all --graph --decorate --oneline

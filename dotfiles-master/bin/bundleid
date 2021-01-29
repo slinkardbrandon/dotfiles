@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# Get the path of bundle (uses apple script magic that I don't understand though)
-main() {
-  osascript -e "id of application \"$1\"" 2>/dev/null ||
-    { echo "$FUNCNAME: ERROR: Application with specified name not found: $1" 1>&2; return 1; }
-}
-
-main "$@"

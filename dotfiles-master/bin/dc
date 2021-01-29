@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-main() {
-    docker-compose "$@"
-}
-
-main "$@"
