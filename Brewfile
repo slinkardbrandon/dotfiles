@@ -4,6 +4,7 @@ tap "homebrew/cask-fonts"
 tap "homebrew/core"
 
 brew "vim"
+brew "neovim"
 brew "postgresql"
 brew "wget"
 brew "jq"
