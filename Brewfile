@@ -12,6 +12,7 @@ brew "thefuck"
 brew "htop"
 brew "docker"
 
+cask "adoptopenjdk"
 cask "1password"
 cask "manico"
 cask "iterm2"
