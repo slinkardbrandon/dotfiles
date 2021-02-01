@@ -2,6 +2,7 @@ tap "homebrew/cask"
 tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
 tap "homebrew/core"
+tap "adoptopenjdk/openjdk"
 
 brew "vim"
 brew "neovim"
