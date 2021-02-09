@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Perform a commit in the future. Examples Below:
+# g fsave 'some message' 4H	## 4 Hours in the future
+# g fsave 'some message' 3D	## 3 Days in the future
+# g fsave 'some message' 1m 	## 1 Month in the future
+# g fsave 'some message' 10M 	## 10 Minutes in the future
+
+main () {
+  local message="$1";
+  local shift="$2"
+
+  if [ "$#" -ne 2 ]; then
+    echo "Illegal number of parameters"
+  fi
+
+  git add -A;
+  git commit -m "$message" --no-verify --date "$(eval 'date -v +$shift')";
+}
+
+main "$@"
