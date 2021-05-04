@@ -34,5 +34,5 @@ alias kcuc="kubectl config use-context"
 alias kccc="kubectl config current-context"
 
 function convertgif {
-  ffmpeg -i $1.mov -r 60 -f gif - > $1.gif
+  ffmpeg -i $1.mov -r 30 -f gif - > $1.gif
 }
