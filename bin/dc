@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+# Restart a single docker-compose container, courtesy of @OutdatedVersion
 main() {
-    docker-compose "$@"
+    docker-compose pull "$@"
+    docker-compose stop "$@"
+    docker-compose up -d "$@"
 }
 
 main "$@"

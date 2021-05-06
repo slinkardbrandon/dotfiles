@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-main () {
-  git push --no-verify
+main() {
+    docker-compose "$@"
 }
 
 main "$@"
