@@ -83,6 +83,26 @@ main () {
 
     fi
 
+    if [[ $(uname -s) == "Linux" ]]; then
+
+        # Configure OSX preferences
+        while true
+        do
+        read -p "Would you like to configure Linux? [y] " answer
+        answer=${answer:-y}
+
+        case $answer in
+        [yY]* ) echo -e '\nConfiguring OSX System Settings\n'
+                "$ROOT/config-linux.sh"
+                break;;
+        [nN] )  break;;
+        * )     echo "Please enter Y or N.";
+                break;;
+        esac
+        done
+
+    fi
+
     # Configure Git
     while true
     do

@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-uninstallAntigen () {
-  if [ -f ${HOME}/.antigen.zsh ]; then
-    echo -e "Removing antigen plugin manager"
-    rm -rf ${HOME}/.antigen.zsh
-  fi
-}
-
 cloneZGen () {
 
   if [ -f ${HOME}/.zgen/zgen.zsh ]; then
@@ -20,8 +13,9 @@ cloneZGen () {
 }
 
 setupZsh () {
-  # Uninstall antigen if it's on the machine because it's heckin chonky
-  uninstallAntigen
+  if [[ $(uname -s) == "Linux" ]]; then
+    sudo apt install zsh
+  fi
 
   # Setup zgen before copying in zshrc as I enjoy several zgen bundles :D
   cloneZGen
