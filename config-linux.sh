@@ -5,14 +5,27 @@ main () {
   echo -e "📩 Updating package list and checking for updated versions"
   sudo apt -qq update -q
 
-  # Basic Required Installs 
+  # Basic Required Installs
   sudo apt -q install -qqy \
     apt-transport-https \
+    vim \
     curl \
     zsh \
     gdebi-core \
     wget
 
+  # Significantly alter the key repeat interval and initial delay before repeats occur.
+  gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15
+  gsettings set org.gnome.desktop.peripherals.keyboard delay 225
+
+  # Install Fira Code
+  if [ $(ls -A ~/.local/share/fonts | grep Fira |  wc -l) -eq 0 ]; then
+    mkdir -p ~/.local/share/fonts
+    ## Original Link Seems broken, using one from the wayback machine
+    ## https://github.com/tonsky/FiraCode/blob/master/distr/ttf/FiraCode-$type.ttf?raw=true"
+    for type in Bold Light Medium Regular Retina; do wget -O ~/.local/share/fonts/FiraCode-$type.ttf "https://web.archive.org/web/20201023175352/https://raw.githubusercontent.com/tonsky/FiraCode/master/distr/ttf/FiraCode-$type.ttf"; done
+    fc-cache -f
+  fi
 
   # Brave 
   if ! hash brave-browser 2>/dev/null; then
@@ -32,10 +45,19 @@ main () {
     sudo apt -q install -y discord
   fi
 
-  # VSCode 
+  # Spotify
+  if ! hash spotify 2>/dev/null; then
+    echo -e "Installing Spotify 🎶\n"
+    curl -sS https://download.spotify.com/debian/pubkey_0D811D58.gpg | sudo apt-key add -
+    echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+    sudo apt -qq update
+    sudo apt -qq install -y spotify-client
+  fi
+
+  # VSCode
   if ! hash code 2>/dev/null; then
     echo -e "Installing Visual Studio Code 🖥️\n"
-    
+
     wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
     sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
     sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'
@@ -43,12 +65,12 @@ main () {
 
     sudo apt -q update
     sudo apt -q install -y code
+    cat $HOME/.files/vscode/keybindings.json > ~/.config/Code/User/keybindings.json
   fi
 
-  # 1Password 
+  # 1Password
   if ! hash 1password 2>/dev/null; then
     echo -e "Installing 1Password 🛡️\n"
-    
     curl -sS https://downloads.1password.com/linux/keys/1password.asc | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
     echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' | sudo tee /etc/apt/sources.list.d/1password.list
     sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
