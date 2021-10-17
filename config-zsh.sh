@@ -24,6 +24,8 @@ setupZsh () {
 
   ln -sf $(pwd)/zshrc ~/.zshrc
 
+  chsh -s $(which zsh)
+
   echo -e 'Applying changes from zshrc';
   # Switch to using zsh from bash
   zsh

@@ -12,7 +12,8 @@ main () {
     curl \
     zsh \
     gdebi-core \
-    wget
+    wget \
+    thefuck
 
   # Significantly alter the key repeat interval and initial delay before repeats occur.
   gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15

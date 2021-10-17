@@ -1,6 +1,7 @@
 alias dotfiles="cd ${DOTFILES}"
 alias .files="dotfiles"
 alias g="git"
+alias fuck="thefuck"
 alias f="fuck"
 alias c="code"
 alias dc="docker-compose"

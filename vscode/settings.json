@@ -51,7 +51,7 @@
   "editor.snippetSuggestions": "top",
   "gitlens.codeLens.enabled": false,
   "typescript.surveys.enabled": false,
-  "terminal.integrated.shell.osx": "/usr/local/bin/fish",
+  "terminal.integrated.shell": "/usr/bin/zsh",
   "terminal.integrated.fontFamily": "Fira Code",
   "editor.fontLigatures": true,
   "terminal.integrated.fontSize": 11,
