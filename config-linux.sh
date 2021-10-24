@@ -13,7 +13,8 @@ main () {
     zsh \
     gdebi-core \
     wget \
-    thefuck
+    thefuck \
+    exfat-utils
 
   # Significantly alter the key repeat interval and initial delay before repeats occur.
   gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15
