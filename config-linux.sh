@@ -34,8 +34,10 @@ main () {
     echo -e "Installing Brave Browser 🦁\n"
     sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
     echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"|sudo tee /etc/apt/sources.list.d/brave-browser-release.list
+    echo -e "Updating Apt List\n"
     sudo apt -q update
-    sudo apt -qinstall -y brave-browser
+    echo -e "Actuually installing brave\n";
+    sudo apt -q install -y brave-browser
   fi
 
   # Discord 
@@ -67,6 +69,7 @@ main () {
 
     sudo apt -q update
     sudo apt -q install -y code
+    mkdir -p ~/.config/Code/User/keybindings.json
     cat $HOME/.files/vscode/keybindings.json > ~/.config/Code/User/keybindings.json
   fi
 
