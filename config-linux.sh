@@ -89,13 +89,19 @@ main () {
 
     # Microsoft Teams
   if ! hash teams 2>/dev/null; then
-    echo -e "Installing Microsoft Teams \n"
-    curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-    sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/ms-teams stable main" > /etc/apt/sources.list.d/teams.list'
+    echo -e "TODO: Installing Microsoft Teams \n"
+    # The copy of teams this installs does not boot and freezes the PC.
+    # curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+    # sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/ms-teams stable main" > /etc/apt/sources.list.d/teams.list'
 
     sudo apt -q update
-    sudo apt -q install -y teams
+    # sudo apt -q install -y teams
   fi
+
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+  nvm install 14
+  nvm alias default 14
+  nvm use 14
 }
 
 main
