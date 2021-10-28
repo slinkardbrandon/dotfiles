@@ -32,6 +32,11 @@ setupZsh () {
 
   # Apply the zshrc configuration
   source ~/.zshrc
+
+  echo -e "Rebooting the machine now."
+  sleep 3;
+
+  sudo reboot
 }
 
 main () {
