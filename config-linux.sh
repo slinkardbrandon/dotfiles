@@ -2,6 +2,9 @@
 set -e
 
 main () {
+  echo -e "Applying debian specific settings"
+  setxkbmap -option caps:escape
+
   echo -e "📩 Updating package list and checking for updated versions"
   sudo apt -qq update -q
 
@@ -69,8 +72,9 @@ main () {
 
     sudo apt -q update
     sudo apt -q install -y code
-    mkdir -p ~/.config/Code/User/keybindings.json
-    cat $HOME/.files/vscode/keybindings.json > ~/.config/Code/User/keybindings.json
+    # Prefer settings sync nowadays
+    # [ -d "${d}" ] && mkdir -p ~/.config/Code
+    # cat $HOME/.files/vscode/keybindings.json > ~/.config/Code/User/keybindings.json
   fi
 
   # 1Password
@@ -98,10 +102,16 @@ main () {
     # sudo apt -q install -y teams
   fi
 
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-  nvm install 14
-  nvm alias default 14
-  nvm use 14
+
+  if ! hash nvm 2>/dev/null; then
+    echo "Installing nvm"
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+    nvm install 14
+    nvm alias default 14
+    nvm use 14
+  fi
+
 }
 
 main
