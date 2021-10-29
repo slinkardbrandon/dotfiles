@@ -17,7 +17,9 @@ main () {
     gdebi-core \
     wget \
     thefuck \
-    exfat-utils
+    exfat-utils \
+    network-manager-vpnc \
+    network-manager-vpnc-gnome
 
   # Significantly alter the key repeat interval and initial delay before repeats occur.
   gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15
