@@ -19,7 +19,8 @@ main () {
     thefuck \
     exfat-utils \
     network-manager-vpnc \
-    network-manager-vpnc-gnome
+    network-manager-vpnc-gnome \
+    openconnect
 
   # Significantly alter the key repeat interval and initial delay before repeats occur.
   gsettings set org.gnome.desktop.peripherals.keyboard repeat-interval 15
@@ -96,12 +97,11 @@ main () {
     # Microsoft Teams
   if ! hash teams 2>/dev/null; then
     echo -e "TODO: Installing Microsoft Teams \n"
-    # The copy of teams this installs does not boot and freezes the PC.
-    # curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-    # sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/ms-teams stable main" > /etc/apt/sources.list.d/teams.list'
 
-    sudo apt -q update
-    # sudo apt -q install -y teams
+    curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+    sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/ms-teams stable main" > /etc/apt/sources.list.d/teams.list'
+    sudo apt update
+    sudo apt -q install -y teams
   fi
 
 
