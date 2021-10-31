@@ -100,7 +100,7 @@ export PATH="${PATH}:${LOCAL_NODE_MODULES_BIN}"
 source ${DOTFILES}/aliases
 
 # Register additional `builtin`commands
-eval $(thefuck --alias)
+eval $(thefuck --alias f)
 
 for f in ${HOME}/.files/not_credentials/*.env; do
   source ${f}
