@@ -12,6 +12,8 @@ main () {
   sudo apt -q install -qqy \
     apt-transport-https \
     vim \
+    jq \
+    python3-pip \
     curl \
     zsh \
     gdebi-core \
