@@ -11,6 +11,8 @@ main () {
   # Basic Required Installs
   sudo apt -q install -qqy \
     apt-transport-https \
+    ca-certificates \
+    software-properties-common \
     vim \
     jq \
     python3-pip \
@@ -116,6 +118,17 @@ main () {
     nvm use 14
   fi
 
+  if ! hash docker 2>/dev/null; then
+    echo "Installing docker"
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+    apt-cache policy docker-ce
+    sudo apt install docker-ce
+
+    sudo curl -L https://github.com/docker/compose/releases/download/v2.1.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    sudo usermod -aG docker ${USER}
 }
 
 main
