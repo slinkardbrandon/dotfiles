@@ -29,9 +29,17 @@ alias nrdu="npm run down && docker-compose pull && npm run up"
 
 # Kubernetes
 alias k="kubectl"
-alias kc="kubectl config"
-alias kcuc="kubectl config use-context"
-alias kccc="kubectl config current-context"
+alias kd="kubectl --context=${KDEV_CONTEXT}"
+alias ks="kubectl --context=${KSTAGE_CONTEXT}"
+alias kp="kubectl --context=${KPROD_CONTEXT}"
+
+alias kdsecret="ksecret ${KDEV_CONTEXT}"
+alias kssecret="ksecret ${KSTAGE_CONTEXT}"
+alias kpsecret="ksecret ${KPROD_CONTEXT}"
+
+alias kdpg="kd run --rm -it postgres-admin-bslinkard --image=postgres:11-alpine --restart=Never -- sh"
+alias kspg="ks run --rm -it postgres-admin-bslinkard --image=postgres:11-alpine --restart=Never -- sh"
+alias kppg="kp run --rm -it postgres-admin-bslinkard --image=postgres:11-alpine --restart=Never -- sh"
 
 function convertgif {
   ffmpeg -i $1.mov -r 30 -f gif - > $1.gif

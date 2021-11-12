@@ -102,13 +102,13 @@ export PATH="${PATH}:${HOME}/go/bin"
 export PATH="${PATH}:${DOTFILES}/bin"
 export PATH="${PATH}:${LOCAL_NODE_MODULES_BIN}"
 
+for f in ${HOME}/.files/not_credentials/*.env; do
+  echo -e "Sourcing some non-credentials for ${f}"
+  source ${f}
+done
+
 # Load aliases.
 source ${DOTFILES}/aliases
 
 # Register additional `builtin`commands
 eval $(thefuck --alias)
-
-for f in ${HOME}/.files/not_credentials/*.env; do
-  echo -e "Sourcing some non-credentials for ${f}"
-  source ${f}
-done
