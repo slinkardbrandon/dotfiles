@@ -20,7 +20,6 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
   # and tags depending on context.
   zgen oh-my-zsh plugins/git-extras
 
-  zgen oh-my-zsh plugins/jira
   zgen oh-my-zsh plugins/command-not-found
 
   zgen loadall <<EOPLUGINS
@@ -56,11 +55,6 @@ if [[ ! -s ${ZDOTDIR:-${HOME}}/.zgen/init.zsh ]]; then
     # Set ZGEN_PLUGIN_UPDATE_DAYS before calling the bundle if you don't want the default value of 7 days.
     # Set ZGEN_SYSTEM_UPDATE_DAYS before calling the bundle if you don't want the default value of 7 days.
     unixorn/autoupdate-zgen
-
-    # Adds Bitbucket helper scripts
-    # git-bb-create-pull-request
-    # git-bb-list-pull-requests
-    unixorn/bitbucket-git-helpers.plugin.zsh
 
     # A Zsh plugin to help remembering those shell aliases and Git aliases you once defined.
     djui/alias-tips
@@ -111,4 +105,12 @@ done
 source ${DOTFILES}/aliases
 
 # Register additional `builtin`commands
-eval $(thefuck --alias)
+eval $(thefuck --alias f)
+
+for f in ${HOME}/.files/not_credentials/*.env; do
+  source ${f}
+done
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
