@@ -3,7 +3,7 @@ set -e
 
 main () {
   echo -e "Applying debian specific settings"
-  setxkbmap -option caps:escape
+  # setxkbmap -option caps:escape
 
   echo -e "📩 Updating package list and checking for updated versions"
   sudo apt -qq update -q
@@ -129,6 +129,7 @@ main () {
     sudo chmod +x /usr/local/bin/docker-compose
 
     sudo usermod -aG docker ${USER}
+  fi
 }
 
 main
