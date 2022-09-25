@@ -1,18 +1,12 @@
 alias dotfiles="cd ${DOTFILES}"
 alias .files="dotfiles"
 alias g="git"
-# alias fuck="thefuck"
-# alias f="fuck"
 alias c="code"
 alias dc="docker-compose"
 alias devserver="docker run -d -p 5000:5000 --restart=always --name registry registry:2"
 
 # Yarn aliases
 alias y="yarn"
-alias yr="yarn run"
-alias ys="yarn start"
-alias yt="yarn test"
-alias yi="yarn add"
 
 # NPM aliases
 alias n="npm"
@@ -21,26 +15,20 @@ alias ns="npm start"
 alias nt="npm test"
 alias ni="npm run integration"
 alias nti="npm run test:integration"
-alias na="npm run acceptance"
 alias nrd="npm run down"
 alias nru="npm run up"
 alias nrud="npm run up:dependencies"
-alias nds="npm run down && npm start"
 alias nrdu="npm run down && docker-compose pull && npm run up"
+
+# PNPM
+alias p="pnpm"
+alias px="pnpm exec"
 
 # Kubernetes
 alias k="kubectl"
 alias kd="kubectl --context=${KDEV_CONTEXT}"
 alias ks="kubectl --context=${KSTAGE_CONTEXT}"
 alias kp="kubectl --context=${KPROD_CONTEXT}"
-
-alias kdsecret="ksecret ${KDEV_CONTEXT}"
-alias kssecret="ksecret ${KSTAGE_CONTEXT}"
-alias kpsecret="ksecret ${KPROD_CONTEXT}"
-
-alias kdpg="kd run --rm -it postgres-admin-bslinkard --image=postgres:11-alpine --restart=Never -- sh"
-alias kspg="ks run --rm -it postgres-admin-bslinkard --image=postgres:11-alpine --restart=Never -- sh"
-alias kppg="kp run --rm -it postgres-admin-bslinkard --image=postgres:11-alpine --restart=Never -- sh"
 
 function convertgif {
   ffmpeg -i $1.mov -r 30 -f gif - > $1.gif
