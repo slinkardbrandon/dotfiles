@@ -14,14 +14,19 @@ alias ys="yarn start"
 alias yt="yarn test"
 alias yi="yarn add"
 
+
+# pNPM aliases
+alias p="pnpm"
+alias pr="pnpm run"
+alias ps="pnpm start"
+alias pt="pnpm test"
+alias px="pnpm exec"
+
 # NPM aliases
 alias n="npm"
 alias nr="npm run"
 alias ns="npm start"
 alias nt="npm test"
-alias ni="npm run integration"
-alias nti="npm run test:integration"
-alias na="npm run acceptance"
 alias nrd="npm run down"
 alias nru="npm run up"
 alias nrud="npm run up:dependencies"

@@ -1,0 +1,8 @@
+#! /usr/bin/env bash
+
+# Kill all running helmchart pods
+main() {
+  helm ls --all --short | xargs -L1 helm delete
+}
+
+main "$@"
