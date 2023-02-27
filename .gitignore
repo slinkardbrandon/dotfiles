@@ -2,3 +2,5 @@ not_credentials/*
 !not_credentials/bullshit.env
 
 dotfiles-master
+.DS_Store
+
