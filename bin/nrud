@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-main() {
-    npm run up:dependencies
-}
-
-main "$@"

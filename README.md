@@ -1,11 +1,11 @@
-# dotfiles
+# .files
 
-...files hype
+The best darn `.files` the world has ever seen. (I'm not biased, you can trust me)
 
 ## Note
 
-- If you already have files that live at `~/.files` beware of the script as it will nuke them.
-- You may have to run this script a couple times due to both how MacOS installs certain applications and due to the terminal configuration steps
+- **Currently Under Construction** - _who needs branches right?_
+- https://gist.github.com/slinkardbrandon/121aadbbe8dc9db862d16aa0e969fcae
 
 ## Install Script
 

@@ -43,7 +43,7 @@ main () {
         setupGitRemote
     fi
 
-    "$ROOT/symlink-common.sh"
+    "$ROOT/symlink.sh"
 
     # If we're on a Mac
     if [[ $(uname -s) == "Darwin" ]]; then
@@ -57,43 +57,6 @@ main () {
         case $answer in
         [yY]* ) echo -e '\nConfiguring OSX System Settings\n'
                 "$ROOT/config-osx.sh"
-                break;;
-        [nN] )  break;;
-        * )     echo "Please enter Y or N.";
-                break;;
-        esac
-        done
-
-        # Setup OSX dev apps
-        while true
-        do
-        read -p "Would you like to setup OSX development applications? [n] " answer
-        answer=${answer:-n}
-
-        case $answer in
-        [yY]* ) echo -e "\nSetting up OSX development applications\n"
-                "$ROOT/install-osx-dev-apps.sh"
-                break;;
-
-        [nN] )  break;;
-        * )     echo "Please enter Y or N.";
-                break;;
-        esac
-        done
-
-    fi
-
-    if [[ $(uname -s) == "Linux" ]]; then
-
-        # Configure OSX preferences
-        while true
-        do
-        read -p "Would you like to configure Linux? [y] " answer
-        answer=${answer:-y}
-
-        case $answer in
-        [yY]* ) echo -e '\nConfiguring OSX System Settings\n'
-                "$ROOT/config-linux.sh"
                 break;;
         [nN] )  break;;
         * )     echo "Please enter Y or N.";
@@ -119,41 +82,6 @@ main () {
             break;;
     esac
     done
-
-    # Configure Homebrew
-    while true
-    do
-    read -p "Would you like to setup brew use the public brewfile? [n] " answer
-    answer=${answer:-n}
-
-    case $answer in
-    [yY]* ) echo -e '\nConfiguring Brew\n'
-            "$ROOT/setup-homebrew.sh"
-            break;;
-    [nN] )  break;;
-    * )     echo "Please enter Y or N.";
-            break;;
-    esac
-    done
-
-    # Configure Z Shell last because sourcing your .zshrc, applying bundles, etc can
-    # cause your terminal to restart, if that happens you won't see the final echos
-    # but your terminal will be restarted and good to go :)
-    while true
-    do
-    read -p "Would you like to configure zsh? [y] " answer
-    answer=${answer:-y}
-
-    case $answer in
-    [yY]* ) echo -e '\nConfiguring zsh\n'
-            "$ROOT/config-zsh.sh"
-            break;;
-    [nN] )  break;;
-    * )     echo "Please enter Y or N.";
-            break;;
-    esac
-    done
-
 }
 
 main
