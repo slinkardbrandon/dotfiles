@@ -4,3 +4,4 @@ set --export --prepend PATH "/Users/slink/.rd/bin"
 
 starship init fish | source
 
+nvm use lts
