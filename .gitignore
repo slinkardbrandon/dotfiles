@@ -6,3 +6,6 @@ dotfiles-master
 
 
 config/fish/fish_variables
+config/fish/conf.d
+config/fish/completions
+config/fish/functions

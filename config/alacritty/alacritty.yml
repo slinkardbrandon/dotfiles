@@ -1,7 +1,7 @@
 # Attach to a tmux session if it exists, otherwise create a new one
 # inside of a glorious fish shell
 shell:
-  program: /Users/bslinkard/.nix-profile/bin/fish
+  program: /Users/slink/.nix-profile/bin/fish
   args:
     - -l
     - -c
