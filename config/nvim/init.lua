@@ -2,6 +2,8 @@ require("slink");
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 
+vim.g.mapleader = " "
+
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
     "git",
@@ -15,6 +17,14 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
+   {
+    "folke/tokyonight.nvim",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      vim.cmd([[colorscheme tokyonight-moon]])
+    end,
+  },
   { "folke/lazy.nvim", version = "*" },
   {
     "windwp/nvim-spectre",
@@ -27,6 +37,10 @@ require("lazy").setup({
     cmd = "Telescope",
     version = false,
     dependencies = { 'nvim-lua/plenary.nvim' }
+  },
+  {
+    "nvim-telescope/telescope-file-browser.nvim",
+    dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' },
   },
   {
     "nvim-treesitter/nvim-treesitter",
@@ -88,4 +102,9 @@ require("lazy").setup({
   }
 
 })
+
+local builtin = require('telescope.builtin')
+
+vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
 
