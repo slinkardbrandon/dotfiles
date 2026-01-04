@@ -20,12 +20,6 @@ if command -v starship >/dev/null 2>&1
     starship init fish | source
 end
 
-# NVM - Node Version Manager
-# Set default node version if nvm is available
-if command -v nvm >/dev/null 2>&1
-    nvm use default 2>/dev/null || nvm use 24 2>/dev/null
-end
-
 # Load aliases
 if test -f ~/.config/fish/aliases.fish
     source ~/.config/fish/aliases.fish

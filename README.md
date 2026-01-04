@@ -188,8 +188,45 @@ Edit `git/.gitconfig` and update:
 [user]
     name = Your Name
     email = your.email@example.com
-    signingkey = YOUR_GPG_KEY
 ```
+
+### Set Up GPG Signing (Optional)
+
+If you want to sign your commits with GPG:
+
+1. **Generate a new GPG key** (if you don't have one):
+   ```bash
+   gpg --full-generate-key
+   ```
+   Choose RSA and RSA, 4096 bits, and follow the prompts.
+
+2. **List your GPG keys** to get the key ID:
+   ```bash
+   gpg --list-secret-keys --keyid-format=long
+   ```
+   Look for the line like `sec   rsa4096/YOUR_KEY_ID` - copy that key ID.
+
+3. **Configure Git to use your key**:
+   Edit `git/.gitconfig` and uncomment/update:
+   ```ini
+   [user]
+       signingkey = YOUR_KEY_ID
+   
+   [commit]
+       gpgsign = true
+   ```
+
+4. **Export your public key to GitHub/GitLab**:
+   ```bash
+   gpg --armor --export YOUR_KEY_ID
+   ```
+   Copy the output and add it to your Git provider's SSH/GPG keys settings.
+
+5. **Configure GPG to use pinentry-mac**:
+   ```bash
+   echo "pinentry-program /opt/homebrew/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
+   gpgconf --kill gpg-agent
+   ```
 
 ### Add More Homebrew Packages
 

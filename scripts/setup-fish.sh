@@ -56,11 +56,5 @@ fi
 print_info "Installing Fisher plugin manager..."
 fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher" || true
 
-# Install Fisher plugins from fish_plugins file
-if [ -f "$HOME/dotfiles/fish/fish_plugins" ]; then
-    print_info "Installing Fisher plugins..."
-    fish -c "fisher update" || true
-    print_success "Fisher plugins installed!"
-fi
-
 print_success "Fish shell setup complete!"
+print_info "Note: Fisher plugins will be installed after symlinks are created"

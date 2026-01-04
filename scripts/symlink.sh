@@ -85,3 +85,10 @@ if [ -f "$DOTFILES_DIR/alacritty/alacritty.toml" ]; then
 fi
 
 print_success "All symlinks created!"
+
+# Install Fisher plugins now that fish_plugins is symlinked
+print_info "Installing Fisher plugins..."
+if command -v fish &> /dev/null; then
+    fish -c "fisher update" 2>/dev/null || print_warning "Fisher plugins installation failed - run 'fisher update' manually after restarting shell"
+    print_success "Fisher plugins installed!"
+fi
