@@ -154,6 +154,7 @@ dotfiles/
 │   └── alacritty.toml     # Alacritty terminal config
 └── scripts/
     ├── setup-fish.sh      # Fish shell installation
+    ├── setup-keys.sh      # GPG & SSH key setup
     └── symlink.sh         # Create symlinks
 ```
 
@@ -186,13 +187,29 @@ If you prefer to run steps manually:
    bash scripts/symlink.sh
    ```
 
-5. **Set macOS defaults** (optional):
+5. **Set up GPG & SSH keys** (optional):
+
+   ```bash
+   bash scripts/setup-keys.sh
+   ```
+
+   This script will:
+
+   - Install pinentry-mac, gpg, and gh (if needed)
+   - Generate SSH keys (ed25519)
+   - Generate GPG keys (4096-bit RSA)
+   - Configure GPG agent for commit signing
+   - Set up SSH config for GitHub
+   - Optionally upload keys to GitHub via GitHub CLI
+   - Create encrypted backups of your keys
+
+6. **Set macOS defaults** (optional):
 
    ```bash
    bash macos/defaults.sh
    ```
 
-6. **Restart your terminal**:
+7. **Restart your terminal**:
    ```bash
    exec fish
    ```
