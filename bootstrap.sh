@@ -82,41 +82,17 @@ fi
 
 print_success "Homebrew is ready"
 
-# Install essential packages
-print_info "Installing essential packages..."
-brew install git fish starship
+# Install packages from Brewfile
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
+if [ -f "$DOTFILES_DIR/Brewfile" ]; then
+    print_info "Installing packages from Brewfile..."
+    brew bundle --file="$DOTFILES_DIR/Brewfile"
+    print_success "All packages installed from Brewfile"
+else
+    print_warning "Brewfile not found, skipping package installation"
+fi
 
 print_info "Node.js will be managed via NVM (installed via Fish plugin)"
-
-# Install development tools
-print_info "Installing development tools..."
-brew install \
-    curl \
-    wget \
-    jq \
-    tree \
-    htop \
-    ripgrep \
-    fd \
-    bat \
-    exa \
-    fzf \
-    gpg \
-    git-lfs \
-    gnupg \
-    pinentry-mac \
-    go \
-    defaultbrowser
-
-# Install casks (GUI applications)
-print_info "Installing GUI applications..."
-brew install --cask \
-    google-chrome \
-    font-fira-code-nerd-font \
-    rectangle \
-    alacritty
-
-print_success "Installed Alacritty and FiraCode Nerd Font (required for Alacritty config)"
 
 # Post-install configuration
 print_info "Configuring installed tools..."
