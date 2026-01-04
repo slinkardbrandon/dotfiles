@@ -25,6 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/slinkardbrandon/dotfiles/main/insta
 ### Applications Installed via Homebrew
 
 The setup will automatically install:
+
 - **Google Chrome** (and set as default browser)
 - **Alacritty** (terminal with custom config)
 - **Rectangle** (window management)
@@ -33,6 +34,7 @@ The setup will automatically install:
 ### Applications to Install Manually
 
 You'll need to download and install these separately:
+
 - **1Password** - Password manager
 - **VS Code** - Code editor
 - **Obsidian** - Note-taking app
@@ -57,6 +59,7 @@ You'll need to download and install these separately:
 ### Custom Fish Functions
 
 - **`commit`** - Git commit with optional timestamp manipulation
+
   ```bash
   commit "feat: add feature"          # Normal commit
   commit "fix: bug fix" -30m          # 30 minutes in the past
@@ -64,26 +67,31 @@ You'll need to download and install these separately:
   ```
 
 - **`killport`** - Kill process running on a specific port
+
   ```bash
   killport 3000
   ```
 
 - **`dprune`** - Clean up Docker containers, images, and networks
+
   ```bash
   dprune
   ```
 
 - **`dnuke`** - Nuclear option: remove ALL Docker data
+
   ```bash
   dnuke
   ```
 
 - **`mkcd`** - Create directory and cd into it
+
   ```bash
   mkcd ~/projects/new-project
   ```
 
 - **`extract`** - Extract any archive format
+
   ```bash
   extract archive.tar.gz
   ```
@@ -111,6 +119,7 @@ The setup configures sensible macOS defaults including:
 ### Development Tools
 
 Installed via Homebrew:
+
 - **Languages**: Go
 - **Git Tools**: git-lfs, gpg, gnupg, pinentry-mac
 - **CLI Utilities**: curl, wget, jq, tree, htop, ripgrep, fd, bat, exa, fzf
@@ -122,6 +131,9 @@ Installed via Homebrew:
 dotfiles/
 ├── install.sh              # Main installation script
 ├── bootstrap.sh            # Xcode CLI Tools & Homebrew
+├── scripts/
+│   ├── setup-fish.sh      # Fish shell installation & setup
+│   └── symlink.sh         # Create symlinks for configs
 ├── macos/
 │   └── defaults.sh        # macOS system preferences
 ├── fish/
@@ -136,7 +148,8 @@ dotfiles/
 │       ├── mkcd.fish
 │       └── extract.fish
 ├── git/
-│   └── .gitconfig         # Git configuration
+│   ├── .gitconfig         # Git configuration
+│   └── .gitignore_global  # Global gitignore patterns
 ├── alacritty/
 │   └── alacritty.toml     # Alacritty terminal config
 └── scripts/
@@ -149,27 +162,32 @@ dotfiles/
 If you prefer to run steps manually:
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/slinkardbrandon/dotfiles.git ~/dotfiles
    cd ~/dotfiles
    ```
 
 2. **Run bootstrap** (Xcode CLI Tools & Homebrew):
+
    ```bash
    bash bootstrap.sh
    ```
 
 3. **Set up Fish shell**:
+
    ```bash
    bash scripts/setup-fish.sh
    ```
 
 4. **Create symlinks**:
+
    ```bash
    bash scripts/symlink.sh
    ```
 
 5. **Set macOS defaults** (optional):
+
    ```bash
    bash macos/defaults.sh
    ```
@@ -184,6 +202,7 @@ If you prefer to run steps manually:
 ### Update Git User Info
 
 Edit `git/.gitconfig` and update:
+
 ```ini
 [user]
     name = Your Name
@@ -195,31 +214,38 @@ Edit `git/.gitconfig` and update:
 If you want to sign your commits with GPG:
 
 1. **Generate a new GPG key** (if you don't have one):
+
    ```bash
    gpg --full-generate-key
    ```
+
    Choose RSA and RSA, 4096 bits, and follow the prompts.
 
 2. **List your GPG keys** to get the key ID:
+
    ```bash
    gpg --list-secret-keys --keyid-format=long
    ```
+
    Look for the line like `sec   rsa4096/YOUR_KEY_ID` - copy that key ID.
 
 3. **Configure Git to use your key**:
    Edit `git/.gitconfig` and uncomment/update:
+
    ```ini
    [user]
        signingkey = YOUR_KEY_ID
-   
+
    [commit]
        gpgsign = true
    ```
 
 4. **Export your public key to GitHub/GitLab**:
+
    ```bash
    gpg --armor --export YOUR_KEY_ID
    ```
+
    Copy the output and add it to your Git provider's SSH/GPG keys settings.
 
 5. **Configure GPG to use pinentry-mac**:
@@ -239,6 +265,7 @@ Edit `macos/defaults.sh` to add or remove system preferences.
 ### Add Fisher Plugins
 
 Edit `fish/fish_plugins` and add plugin repositories, then run:
+
 ```bash
 fisher update
 ```

@@ -37,6 +37,9 @@ function commit --description 'Git commit with custom message and fake timestamp
         # Calculate the fake timestamp
         # Positive values go into the future, negative values go into the past
         set fake_timestamp (math (date +%s) + $seconds)
+        
+        # Use macOS-specific date command (date -r)
+        # Note: This function requires macOS. For Linux, use: date -d "@$fake_timestamp"
         set fake_date (date -r $fake_timestamp "+%Y-%m-%d %H:%M:%S")
         
         # Commit with the fake timestamp

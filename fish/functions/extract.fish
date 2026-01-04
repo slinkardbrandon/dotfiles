@@ -1,5 +1,10 @@
 # Extract various archive formats
-function extract
+function extract --description 'Extract various archive formats'
+    if test (count $argv) -eq 0
+        echo "Usage: extract <archive_file>"
+        return 1
+    end
+    
     if test -f $argv[1]
         switch $argv[1]
             case '*.tar.bz2'

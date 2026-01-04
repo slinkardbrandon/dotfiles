@@ -61,14 +61,15 @@ else
     print_info "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     
-    # Add Homebrew to PATH
+    # Add Homebrew to PATH for current session
     if [[ $(uname -m) == 'arm64' ]]; then
-        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
         eval "$(/opt/homebrew/bin/brew shellenv)"
     else
-        echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
         eval "$(/usr/local/bin/brew shellenv)"
     fi
+    
+    # Note: PATH will be set in Fish config, not shell profile
+    print_info "Homebrew PATH will be configured in Fish shell config"
     
     print_success "Homebrew installed!"
 fi
@@ -104,6 +105,8 @@ brew install --cask \
     font-fira-code-nerd-font \
     rectangle \
     alacritty
+
+print_success "Installed Alacritty and FiraCode Nerd Font (required for Alacritty config)"
 
 # Post-install configuration
 print_info "Configuring installed tools..."

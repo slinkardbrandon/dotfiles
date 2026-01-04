@@ -52,9 +52,5 @@ else
     print_success "Fish is already the default shell"
 fi
 
-# Install Fisher plugin manager
-print_info "Installing Fisher plugin manager..."
-fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher" || true
-
 print_success "Fish shell setup complete!"
-print_info "Note: Fisher plugins will be installed after symlinks are created"
+print_info "Note: Fisher and plugins will be installed after config files are symlinked"
