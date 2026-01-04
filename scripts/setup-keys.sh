@@ -231,41 +231,94 @@ fi
 
 print_info "=== GitHub Integration ==="
 
-# Check if gh is authenticated
-if gh auth status &> /dev/null; then
-    print_success "GitHub CLI is already authenticated"
-
-    read -p "Upload SSH and GPG keys to GitHub? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
+# Function to upload keys to a GitHub account
+upload_keys_to_github() {
+    local hostname=$1
+    local display_name=$2
+    
+    if [ -z "$hostname" ]; then
+        hostname="github.com"
+    fi
+    
+    # Check authentication for this host
+    if gh auth status --hostname "$hostname" &> /dev/null; then
+        print_success "Authenticated to $display_name"
+        
         # Upload SSH key
         if [ -f "$SSH_KEY.pub" ]; then
-            print_info "Uploading SSH key to GitHub..."
-            gh ssh-key add "$SSH_KEY.pub" --title "$(hostname)-$(date +%Y%m%d)" 2>/dev/null
+            print_info "Uploading SSH key to $display_name..."
+            gh ssh-key add "$SSH_KEY.pub" --title "$(hostname)-$(date +%Y%m%d)" --hostname "$hostname" 2>/dev/null
             if [ $? -eq 0 ]; then
-                print_success "SSH key uploaded to GitHub"
+                print_success "SSH key uploaded to $display_name"
             else
-                print_warning "SSH key may already exist on GitHub"
+                print_warning "SSH key may already exist on $display_name"
             fi
         fi
 
         # Upload GPG key
         if [ -n "$GPG_KEY_ID" ]; then
-            print_info "Uploading GPG key to GitHub..."
-            gpg --armor --export "$GPG_KEY_ID" | gh gpg-key add 2>/dev/null
+            print_info "Uploading GPG key to $display_name..."
+            gpg --armor --export "$GPG_KEY_ID" | gh gpg-key add --hostname "$hostname" 2>/dev/null
             if [ $? -eq 0 ]; then
-                print_success "GPG key uploaded to GitHub"
+                print_success "GPG key uploaded to $display_name"
             else
-                print_warning "GPG key may already exist on GitHub"
+                print_warning "GPG key may already exist on $display_name"
             fi
         fi
+
+        return 0
+    else
+        print_warning "Not authenticated to $display_name"
+        echo "To authenticate, run: gh auth login --hostname $hostname"
+        return 1
     fi
-else
-    print_warning "GitHub CLI is not authenticated"
-    echo
-    echo "To upload keys to GitHub, run: gh auth login"
-    echo "Then run this script again to upload your keys"
+}
+
+# Upload to personal GitHub
+echo
+read -p "Upload keys to github.com? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    upload_keys_to_github "github.com" "GitHub.com"
 fi
+
+# Ask about enterprise GitHub
+echo
+read -p "Do you have an enterprise GitHub account? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    read -p "Enter enterprise GitHub hostname (e.g., github.company.com): " ENTERPRISE_HOST
+
+    if [ -n "$ENTERPRISE_HOST" ]; then
+        echo
+        read -p "Upload keys to $ENTERPRISE_HOST? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            upload_keys_to_github "$ENTERPRISE_HOST" "$ENTERPRISE_HOST"
+        fi
+    fi
+fi
+
+# Offer to add more accounts
+echo
+read -p "Add keys to another GitHub account? (y/n) " -n 1 -r
+echo
+while [[ $REPLY =~ ^[Yy]$ ]]; do
+    read -p "Enter GitHub hostname: " ADDITIONAL_HOST
+
+    if [ -n "$ADDITIONAL_HOST" ]; then
+        echo
+        read -p "Upload keys to $ADDITIONAL_HOST? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            upload_keys_to_github "$ADDITIONAL_HOST" "$ADDITIONAL_HOST"
+        fi
+    fi
+
+    echo
+    read -p "Add keys to another GitHub account? (y/n) " -n 1 -r
+    echo
+done
 
 # ============================================================================
 # Backup Keys
