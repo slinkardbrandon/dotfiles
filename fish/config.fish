@@ -30,8 +30,8 @@ if command -v starship >/dev/null 2>&1
 end
 
 # Load aliases
-if test -f ~/.config/fish/aliases.fish
-    source ~/.config/fish/aliases.fish
+if test -f $HOME/.config/fish/aliases.fish
+    source $HOME/.config/fish/aliases.fish
 end
 
 # Environment variables

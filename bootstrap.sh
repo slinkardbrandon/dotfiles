@@ -63,14 +63,11 @@ else
     
     # Add Homebrew to PATH for current session
     if [[ $(uname -m) == 'arm64' ]]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
+        export PATH="/opt/homebrew/bin:$PATH"
     else
-        eval "$(/usr/local/bin/brew shellenv)"
+        export PATH="/usr/local/bin:$PATH"
     fi
-    
-    # Note: PATH will be set in Fish config, not shell profile
-    print_info "Homebrew PATH will be configured in Fish shell config"
-    
+
     print_success "Homebrew installed!"
 fi
 

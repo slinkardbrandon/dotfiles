@@ -124,7 +124,7 @@ if [ "$DO_MACOS" = true ]; then
     fi
 fi
 
-print_success "Installation complete!"
+print_success "🎉 Dotfiles installation complete!"
 echo
 print_info "=========================================="
 print_info "Next Steps:"
@@ -145,10 +145,3 @@ print_info "5. Configure default browser if needed:"
 print_info "   Chrome should already be set as default"
 echo
 print_success "Enjoy your new setup!"
-    else
-        print_warning "macOS defaults script not found, skipping..."
-    fi
-fi
-
-print_success "🎉 Dotfiles installation complete!"
-print_info "Please restart your terminal or run: exec fish"
