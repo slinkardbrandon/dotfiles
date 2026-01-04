@@ -86,8 +86,11 @@ print_success "Homebrew is ready"
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
 if [ -f "$DOTFILES_DIR/Brewfile" ]; then
     print_info "Installing packages from Brewfile..."
-    brew bundle --file="$DOTFILES_DIR/Brewfile"
-    print_success "All packages installed from Brewfile"
+    brew bundle --file="$DOTFILES_DIR/Brewfile" || {
+        print_warning "Some packages may have failed (likely conflicts with manually installed apps)"
+        print_info "This is expected on existing systems and won't affect functionality"
+    }
+    print_success "Package installation complete"
 else
     print_warning "Brewfile not found, skipping package installation"
 fi

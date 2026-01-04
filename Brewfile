@@ -34,6 +34,9 @@ cask "font-fira-code-nerd-font"
 cask "rectangle"
 # Note: Alacritty cask is deprecated, install manually from https://github.com/alacritty/alacritty
 cask "localsend"
+cask "1password"
+cask "visual-studio-code"
+cask "obsidian"
 
 # Go packages
 go "golang.org/x/tools/gopls"

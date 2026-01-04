@@ -132,16 +132,16 @@ print_info "=========================================="
 echo
 print_info "1. Restart your terminal or run: exec fish"
 print_info "2. Fisher will auto-install plugins on first Fish launch"
-print_info "3. Install manually:"
-print_info "   - 1Password (password manager)"
-print_info "   - VS Code (code editor)"
-print_info "   - Obsidian (note-taking)"
-echo
-print_info "4. Grant accessibility permissions:"
+print_info "3. Grant accessibility permissions:"
 print_info "   - System Settings > Privacy & Security > Accessibility"
 print_info "   - Enable Rectangle for window management"
 echo
-print_info "5. Configure default browser if needed:"
+print_info "4. Sign in to your apps:"
+print_info "   - 1Password"
+print_info "   - VS Code (Settings Sync)"
+print_info "   - Chrome"
+echo
+print_info "5. Default browser:"
 print_info "   Chrome should already be set as default"
 echo
 print_success "Enjoy your new setup!"
