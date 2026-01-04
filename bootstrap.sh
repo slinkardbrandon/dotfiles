@@ -94,6 +94,39 @@ fi
 
 print_info "Node.js will be managed via NVM (installed via Fish plugin)"
 
+# Install Alacritty manually (Homebrew cask is deprecated)
+if [ ! -d "/Applications/Alacritty.app" ]; then
+    print_info "Installing Alacritty..."
+    
+    # Get latest version from GitHub API
+    ALACRITTY_VERSION=$(curl -fsSL https://api.github.com/repos/alacritty/alacritty/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    
+    if [ -z "$ALACRITTY_VERSION" ]; then
+        print_error "Failed to fetch latest Alacritty version"
+    else
+        print_info "Latest Alacritty version: $ALACRITTY_VERSION"
+        ALACRITTY_DMG="/tmp/Alacritty.dmg"
+        
+        curl -fsSL "https://github.com/alacritty/alacritty/releases/download/${ALACRITTY_VERSION}/Alacritty-${ALACRITTY_VERSION}.dmg" -o "$ALACRITTY_DMG"
+        
+        # Mount DMG
+        hdiutil attach "$ALACRITTY_DMG" -nobrowse -quiet
+        
+        # Copy app to Applications
+        cp -R "/Volumes/Alacritty/Alacritty.app" /Applications/
+        
+        # Unmount DMG
+        hdiutil detach "/Volumes/Alacritty" -quiet
+        
+        # Clean up
+        rm "$ALACRITTY_DMG"
+        
+        print_success "Alacritty $ALACRITTY_VERSION installed"
+    fi
+else
+    print_success "Alacritty already installed"
+fi
+
 # Post-install configuration
 print_info "Configuring installed tools..."
 

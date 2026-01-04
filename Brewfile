@@ -32,7 +32,7 @@ brew "defaultbrowser"
 cask "google-chrome"
 cask "font-fira-code-nerd-font"
 cask "rectangle"
-cask "alacritty"
+# Note: Alacritty cask is deprecated, install manually from https://github.com/alacritty/alacritty
 cask "localsend"
 
 # Go packages
