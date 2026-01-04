@@ -46,10 +46,12 @@ else
     print_success "Xcode Command Line Tools installed!"
 fi
 
-# Agree to Xcode license
-if ! sudo xcodebuild -license status &> /dev/null; then
-    print_info "Accepting Xcode license..."
-    sudo xcodebuild -license accept
+# Agree to Xcode license (only if full Xcode is installed)
+if command -v xcodebuild &> /dev/null && xcodebuild -version &> /dev/null; then
+    if ! sudo xcodebuild -license status &> /dev/null; then
+        print_info "Accepting Xcode license..."
+        sudo xcodebuild -license accept
+    fi
 fi
 
 # Install Homebrew
