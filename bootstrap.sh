@@ -74,9 +74,20 @@ else
     print_success "Homebrew installed!"
 fi
 
+# Verify Homebrew is available
+if ! command -v brew &> /dev/null; then
+    print_error "Homebrew installation failed or not in PATH"
+    print_error "Please install Homebrew manually: https://brew.sh"
+    exit 1
+fi
+
+print_success "Homebrew is ready"
+
 # Install essential packages
 print_info "Installing essential packages..."
 brew install git fish starship
+
+print_info "Node.js will be managed via NVM (installed via Fish plugin)"
 
 # Install development tools
 print_info "Installing development tools..."

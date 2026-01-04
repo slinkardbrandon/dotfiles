@@ -7,6 +7,11 @@
 
 set -e
 
+# Support non-interactive mode (for piped install)
+# Set defaults for interactive prompts
+SETUP_KEYS="${SETUP_KEYS:-ask}"
+SETUP_MACOS="${SETUP_MACOS:-ask}"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -80,9 +85,17 @@ else
 fi
 
 # Set up GPG and SSH keys
-read -p "Do you want to set up GPG and SSH keys? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+if [ "$SETUP_KEYS" = "yes" ]; then
+    DO_KEYS=true
+elif [ "$SETUP_KEYS" = "no" ]; then
+    DO_KEYS=false
+else
+    read -p "Do you want to set up GPG and SSH keys? (y/n) " -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]] && DO_KEYS=true || DO_KEYS=false
+fi
+
+if [ "$DO_KEYS" = true ]; then
     if [ -f "$DOTFILES_DIR/scripts/setup-keys.sh" ]; then
         print_info "Setting up GPG and SSH keys..."
         bash "$DOTFILES_DIR/scripts/setup-keys.sh"
@@ -92,12 +105,46 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Set macOS defaults
-read -p "Do you want to set macOS defaults? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+if [ "$SETUP_MACOS" = "yes" ]; then
+    DO_MACOS=true
+elif [ "$SETUP_MACOS" = "no" ]; then
+    DO_MACOS=false
+else
+    read -p "Do you want to set macOS defaults? (y/n) " -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]] && DO_MACOS=true || DO_MACOS=false
+fi
+
+if [ "$DO_MACOS" = true ]; then
     if [ -f "$DOTFILES_DIR/macos/defaults.sh" ]; then
         print_info "Setting macOS defaults..."
         bash "$DOTFILES_DIR/macos/defaults.sh"
+    else
+        print_warning "macOS defaults script not found, skipping..."
+    fi
+fi
+
+print_success "Installation complete!"
+echo
+print_info "=========================================="
+print_info "Next Steps:"
+print_info "=========================================="
+echo
+print_info "1. Restart your terminal or run: exec fish"
+print_info "2. Fisher will auto-install plugins on first Fish launch"
+print_info "3. Install manually:"
+print_info "   - 1Password (password manager)"
+print_info "   - VS Code (code editor)"
+print_info "   - Obsidian (note-taking)"
+echo
+print_info "4. Grant accessibility permissions:"
+print_info "   - System Settings > Privacy & Security > Accessibility"
+print_info "   - Enable Rectangle for window management"
+echo
+print_info "5. Configure default browser if needed:"
+print_info "   Chrome should already be set as default"
+echo
+print_success "Enjoy your new setup!"
     else
         print_warning "macOS defaults script not found, skipping..."
     fi

@@ -90,12 +90,4 @@ fi
 
 print_success "All symlinks created!"
 
-# Install Fisher plugin manager and plugins
-print_info "Installing Fisher plugin manager and plugins..."
-if command -v fish &> /dev/null; then
-    # Install Fisher first
-    fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher" 2>/dev/null || print_warning "Fisher installation failed"
-    # Then install plugins from fish_plugins
-    fish -c "fisher update" 2>/dev/null || print_warning "Fisher plugins installation failed - run 'fisher update' manually after restarting shell"
-    print_success "Fisher and plugins installed!"
-fi
+print_info "Fisher plugins will be installed automatically when you first open Fish shell."

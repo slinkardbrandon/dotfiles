@@ -3,6 +3,15 @@
 
 if status is-interactive
     # Commands to run in interactive sessions can go here
+
+    # Auto-install Fisher if not present
+    if not functions -q fisher
+        echo "Installing Fisher plugin manager..."
+        curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+        fisher install jorgebucaran/fisher
+        echo "Fisher installed! Installing plugins..."
+        fisher update
+    end
 end
 
 # Set PATH
