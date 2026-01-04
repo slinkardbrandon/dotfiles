@@ -79,6 +79,18 @@ else
     print_warning "Symlink script not found, skipping..."
 fi
 
+# Set up GPG and SSH keys
+read -p "Do you want to set up GPG and SSH keys? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if [ -f "$DOTFILES_DIR/scripts/setup-keys.sh" ]; then
+        print_info "Setting up GPG and SSH keys..."
+        bash "$DOTFILES_DIR/scripts/setup-keys.sh"
+    else
+        print_warning "Key setup script not found, skipping..."
+    fi
+fi
+
 # Set macOS defaults
 read -p "Do you want to set macOS defaults? (y/n) " -n 1 -r
 echo

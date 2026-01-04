@@ -235,15 +235,15 @@ print_info "=== GitHub Integration ==="
 upload_keys_to_github() {
     local hostname=$1
     local display_name=$2
-    
+
     if [ -z "$hostname" ]; then
         hostname="github.com"
     fi
-    
+
     # Check authentication for this host
     if gh auth status --hostname "$hostname" &> /dev/null; then
         print_success "Authenticated to $display_name"
-        
+
         # Upload SSH key
         if [ -f "$SSH_KEY.pub" ]; then
             print_info "Uploading SSH key to $display_name..."
