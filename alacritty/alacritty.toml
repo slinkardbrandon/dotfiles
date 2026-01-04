@@ -1,0 +1,50 @@
+# Alacritty Configuration
+
+# Window settings
+[window]
+opacity = 0.65
+blur = true
+
+# Font settings
+[font]
+size = 18.0
+normal = { family = "FiraCode Nerd Font Mono", style = "Regular" }
+bold = { family = "FiraCode Nerd Font Mono", style = "Bold" }
+italic = { family = "FiraCode Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "FiraCode Nerd Font Mono", style = "Bold Italic" }
+
+# Inlined Nord theme colors
+[colors]
+draw_bold_text_with_bright_colors = true
+
+[colors.primary]
+background = '#2e3440'
+foreground = '#d8dee9'
+
+[colors.cursor]
+text = '#2e3440'
+cursor = '#d8dee9'
+
+[colors.vi_mode_cursor]
+text = '#2e3440'
+cursor = '#d8dee9'
+
+[colors.selection]
+text = '#d8dee9'
+background = '#4c566a'
+
+[colors.search.matches]
+foreground = '#2e3440'
+background = '#88c0d0'
+
+[colors.footer_bar]
+background = '#4c566a'
+foreground = '#d8dee9'
+
+[colors.hints.start]
+foreground = '#2e3440'
+background = '#88c0d0'
+
+[colors.hints.end]
+foreground = '#8fbcbb'
+background = '#4c566a'

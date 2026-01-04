@@ -1,0 +1,61 @@
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+
+[user]
+	name = Brandon
+	email = slinkardbrandon@gmail.com
+	signingkey = BC16D7232E446846
+
+[commit]
+	gpgsign = true
+
+[push]
+	autoSetupRemote = true
+	default = current
+
+[pull]
+	rebase = true
+
+[core]
+	editor = vim
+	excludesfile = ~/.gitignore_global
+	autocrlf = input
+
+[init]
+	defaultBranch = main
+
+[color]
+	ui = auto
+
+[alias]
+	# Basic shortcuts (kept minimal as requested)
+	st = status
+	co = checkout
+	br = branch
+	ci = commit
+	
+	# Useful log formats
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	last = log -1 HEAD
+	
+	# Undo last commit but keep changes
+	undo = reset HEAD~1 --mixed
+	
+	# Amend without changing message
+	amend = commit --amend --no-edit
+
+[diff]
+	tool = vscode
+
+[merge]
+	tool = vscode
+	conflictstyle = diff3
+
+[difftool "vscode"]
+	cmd = code --wait --diff $LOCAL $REMOTE
+
+[mergetool "vscode"]
+	cmd = code --wait $MERGED
