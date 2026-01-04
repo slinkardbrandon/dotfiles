@@ -12,7 +12,7 @@ brew "htop"
 brew "ripgrep"
 brew "fd"
 brew "bat"
-brew "exa"
+brew "eza"
 brew "fzf"
 
 # Git and GPG tools

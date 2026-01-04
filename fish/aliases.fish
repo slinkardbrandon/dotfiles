@@ -19,15 +19,15 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 ################################################################################
-# List Commands (using exa if available, fallback to ls)
+# List Commands (using eza if available, fallback to ls)
 ################################################################################
 
-if command -v exa >/dev/null 2>&1
-    alias ls='exa'
-    alias ll='exa -l'
-    alias la='exa -la'
-    alias lt='exa --tree'
-    alias l='exa -lah'
+if command -v eza >/dev/null 2>&1
+    alias ls='eza'
+    alias ll='eza -l'
+    alias la='eza -la'
+    alias lt='eza --tree'
+    alias l='eza -lah'
 else
     alias ll='ls -lh'
     alias la='ls -lah'
