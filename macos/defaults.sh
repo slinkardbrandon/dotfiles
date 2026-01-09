@@ -198,17 +198,19 @@ defaults write com.apple.dock show-recents -bool false
 # Safari & WebKit                                                            #
 ###############################################################################
 
+print_info "Configuring Safari (may require Safari to be closed)..."
+
 # Privacy: don't send search queries to Apple
-defaults write com.apple.Safari UniversalSearchEnabled -bool false
-defaults write com.apple.Safari SuppressSearchSuggestions -bool true
+defaults write com.apple.Safari UniversalSearchEnabled -bool false 2>/dev/null || print_warning "Could not set Safari UniversalSearchEnabled"
+defaults write com.apple.Safari SuppressSearchSuggestions -bool true 2>/dev/null || print_warning "Could not set Safari SuppressSearchSuggestions"
 
 # Show the full URL in the address bar (note: this still hides the scheme)
-defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true 2>/dev/null || print_warning "Could not set Safari ShowFullURLInSmartSearchField"
 
 # Enable the Develop menu and the Web Inspector in Safari
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+defaults write com.apple.Safari IncludeDevelopMenu -bool true 2>/dev/null || print_warning "Could not set Safari IncludeDevelopMenu"
+defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true 2>/dev/null || print_warning "Could not set Safari WebKitDeveloperExtrasEnabledPreferenceKey"
+defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true 2>/dev/null || print_warning "Could not set Safari WebKit2DeveloperExtrasEnabled"
 
 ###############################################################################
 # Terminal & iTerm 2                                                         #
