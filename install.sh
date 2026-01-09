@@ -10,7 +10,7 @@ set -e
 # Support non-interactive mode (for piped install)
 # Set defaults for interactive prompts
 SETUP_KEYS="${SETUP_KEYS:-ask}"
-SETUP_MACOS="${SETUP_MACOS:-ask}"
+SETUP_MACOS="${SETUP_MACOS:-yes}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -54,8 +54,12 @@ if [ ! -d "$DOTFILES_DIR" ]; then
     print_success "Dotfiles cloned successfully!"
 else
     print_info "Dotfiles directory already exists. Updating..."
-    cd "$DOTFILES_DIR" && git pull
-    print_success "Dotfiles updated successfully!"
+    cd "$DOTFILES_DIR"
+    if git pull 2>/dev/null; then
+        print_success "Dotfiles updated successfully!"
+    else
+        print_warning "Could not pull latest changes (local modifications present). Continuing with local version..."
+    fi
 fi
 
 cd "$DOTFILES_DIR"
@@ -85,6 +89,7 @@ else
 fi
 
 # Set up GPG and SSH keys
+print_info "Checking key setup preference (SETUP_KEYS=$SETUP_KEYS)..."
 if [ "$SETUP_KEYS" = "yes" ]; then
     DO_KEYS=true
 elif [ "$SETUP_KEYS" = "no" ]; then
@@ -94,6 +99,7 @@ else
     echo
     [[ $REPLY =~ ^[Yy]$ ]] && DO_KEYS=true || DO_KEYS=false
 fi
+print_info "Key setup decision: DO_KEYS=$DO_KEYS"
 
 if [ "$DO_KEYS" = true ]; then
     if [ -f "$DOTFILES_DIR/scripts/setup-keys.sh" ]; then
@@ -105,6 +111,7 @@ if [ "$DO_KEYS" = true ]; then
 fi
 
 # Set macOS defaults
+print_info "Checking macOS setup preference (SETUP_MACOS=$SETUP_MACOS)..."
 if [ "$SETUP_MACOS" = "yes" ]; then
     DO_MACOS=true
 elif [ "$SETUP_MACOS" = "no" ]; then
@@ -114,6 +121,7 @@ else
     echo
     [[ $REPLY =~ ^[Yy]$ ]] && DO_MACOS=true || DO_MACOS=false
 fi
+print_info "macOS setup decision: DO_MACOS=$DO_MACOS"
 
 if [ "$DO_MACOS" = true ]; then
     if [ -f "$DOTFILES_DIR/macos/defaults.sh" ]; then
