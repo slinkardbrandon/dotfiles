@@ -89,7 +89,6 @@ else
 fi
 
 # Set up GPG and SSH keys
-print_info "Checking key setup preference (SETUP_KEYS=$SETUP_KEYS)..."
 if [ "$SETUP_KEYS" = "yes" ]; then
     DO_KEYS=true
 elif [ "$SETUP_KEYS" = "no" ]; then
@@ -99,7 +98,6 @@ else
     echo
     [[ $REPLY =~ ^[Yy]$ ]] && DO_KEYS=true || DO_KEYS=false
 fi
-print_info "Key setup decision: DO_KEYS=$DO_KEYS"
 
 if [ "$DO_KEYS" = true ]; then
     if [ -f "$DOTFILES_DIR/scripts/setup-keys.sh" ]; then
@@ -110,34 +108,20 @@ if [ "$DO_KEYS" = true ]; then
     fi
 fi
 
-# Set macOS defaults
-print_info "Checking macOS setup preference (SETUP_MACOS=$SETUP_MACOS)..."
-if [ "$SETUP_MACOS" = "yes" ]; then
-    DO_MACOS=true
-elif [ "$SETUP_MACOS" = "no" ]; then
-    DO_MACOS=false
+# Set macOS defaults (always run on macOS)
+if [ -f "$DOTFILES_DIR/macos/defaults.sh" ]; then
+    print_info "Setting macOS defaults..."
+    bash "$DOTFILES_DIR/macos/defaults.sh"
 else
-    read -p "Do you want to set macOS defaults? (y/n) " -n 1 -r
-    echo
-    [[ $REPLY =~ ^[Yy]$ ]] && DO_MACOS=true || DO_MACOS=false
+    print_warning "macOS defaults script not found, skipping..."
 fi
-print_info "macOS setup decision: DO_MACOS=$DO_MACOS"
 
-if [ "$DO_MACOS" = true ]; then
-    if [ -f "$DOTFILES_DIR/macos/defaults.sh" ]; then
-        print_info "Setting macOS defaults..."
-        bash "$DOTFILES_DIR/macos/defaults.sh"
-    else
-        print_warning "macOS defaults script not found, skipping..."
-    fi
-
-    # Configure Dock
-    if [ -f "$DOTFILES_DIR/scripts/clear-dock.sh" ]; then
-        print_info "Configuring Dock..."
-        bash "$DOTFILES_DIR/scripts/clear-dock.sh"
-    else
-        print_warning "Dock configuration script not found, skipping..."
-    fi
+# Configure Dock
+if [ -f "$DOTFILES_DIR/scripts/clear-dock.sh" ]; then
+    print_info "Configuring Dock..."
+    bash "$DOTFILES_DIR/scripts/clear-dock.sh"
+else
+    print_warning "Dock configuration script not found, skipping..."
 fi
 
 print_success "🎉 Dotfiles installation complete!"
