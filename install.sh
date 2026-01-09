@@ -122,6 +122,14 @@ if [ "$DO_MACOS" = true ]; then
     else
         print_warning "macOS defaults script not found, skipping..."
     fi
+
+    # Configure Dock
+    if [ -f "$DOTFILES_DIR/scripts/clear-dock.sh" ]; then
+        print_info "Configuring Dock..."
+        bash "$DOTFILES_DIR/scripts/clear-dock.sh"
+    else
+        print_warning "Dock configuration script not found, skipping..."
+    fi
 fi
 
 print_success "🎉 Dotfiles installation complete!"
