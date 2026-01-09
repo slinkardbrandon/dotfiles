@@ -27,6 +27,7 @@ brew "go"
 
 # Utilities
 brew "defaultbrowser"
+brew "dockutil"
 
 # GUI applications
 cask "google-chrome"
