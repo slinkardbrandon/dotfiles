@@ -38,8 +38,9 @@ fi
 
 # 2. Define the "Bloatware" to get rid of
 APPS_TO_REMOVE=(
-    "Messages" "Mail" "Maps" "Photos" "FaceTime" "Phone" 
+    "Messages" "Mail" "Maps" "Photos" "FaceTime" "Phone"
     "Calendar" "Contacts" "Reminders" "Notes" "TV" "Music" "News"
+    "Safari" "iPhone Mirroring" "Games" "Apps"
 )
 
 # 3. Define your "Core 4"

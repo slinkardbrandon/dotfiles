@@ -11,6 +11,7 @@ set -e
 # Colors for output
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
 print_info() {
@@ -19,6 +20,10 @@ print_info() {
 
 print_success() {
     echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 print_info "Setting macOS defaults..."
