@@ -13,38 +13,38 @@ bold = { family = "FiraCode Nerd Font Mono", style = "Bold" }
 italic = { family = "FiraCode Nerd Font Mono", style = "Italic" }
 bold_italic = { family = "FiraCode Nerd Font Mono", style = "Bold Italic" }
 
-# Inlined Nord theme colors
+# Tokyo Night colors
 [colors]
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
-background = '#2e3440'
-foreground = '#d8dee9'
+background = '#1a1b26'
+foreground = '#c0caf5'
 
 [colors.cursor]
-text = '#2e3440'
-cursor = '#d8dee9'
+text = '#1a1b26'
+cursor = '#c0caf5'
 
 [colors.vi_mode_cursor]
-text = '#2e3440'
-cursor = '#d8dee9'
+text = '#1a1b26'
+cursor = '#c0caf5'
 
 [colors.selection]
-text = '#d8dee9'
-background = '#4c566a'
+text = '#c0caf5'
+background = '#33467c'
 
 [colors.search.matches]
-foreground = '#2e3440'
-background = '#88c0d0'
+foreground = '#1a1b26'
+background = '#7aa2f7'
 
 [colors.footer_bar]
-background = '#4c566a'
-foreground = '#d8dee9'
+background = '#33467c'
+foreground = '#c0caf5'
 
 [colors.hints.start]
-foreground = '#2e3440'
-background = '#88c0d0'
+foreground = '#1a1b26'
+background = '#7aa2f7'
 
 [colors.hints.end]
-foreground = '#8fbcbb'
-background = '#4c566a'
+foreground = '#7aa2f7'
+background = '#33467c'

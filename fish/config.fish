@@ -52,8 +52,8 @@ if test -f $HOME/.config/fish/aliases.fish
 end
 
 # Environment variables
-set -gx EDITOR vim
-set -gx VISUAL vim
+set -gx EDITOR nvim
+set -gx VISUAL nvim
 
 # Bun configuration
 set -gx BUN_INSTALL "$HOME/.bun"

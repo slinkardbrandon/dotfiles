@@ -19,6 +19,9 @@ const COMMON_PACKAGES = [
   "git-lfs",
   "gnupg",
   "go",
+  "tmux",
+  "neovim",
+  "make",
 ] as const;
 
 // APT package name overrides (where name differs from Homebrew)
@@ -58,6 +61,17 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
        sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
        sudo apt update && sudo apt install gh -y`,
+    ]);
+  },
+  neovim: async () => {
+    if (await commandExists("nvim")) return;
+    log.info("Installing Neovim (latest via PPA)...");
+    await run([
+      "bash",
+      "-c",
+      `sudo add-apt-repository -y ppa:neovim-ppa/unstable && \
+       sudo apt update && \
+       sudo apt install -y neovim`,
     ]);
   },
   fish: async () => {

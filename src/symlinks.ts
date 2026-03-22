@@ -38,6 +38,18 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".config", "alacritty", "alacritty.toml"),
   });
 
+  // Neovim configuration (symlink entire directory)
+  links.push({
+    source: join(DOTFILES_DIR, "nvim"),
+    target: join(home, ".config", "nvim"),
+  });
+
+  // Tmux configuration
+  links.push({
+    source: join(DOTFILES_DIR, "tmux", "tmux.conf"),
+    target: join(home, ".tmux.conf"),
+  });
+
   // Claude Code settings (shared permissions, not credentials or local overrides)
   links.push({
     source: join(DOTFILES_DIR, "claude", "settings.json"),
