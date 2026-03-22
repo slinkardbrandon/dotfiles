@@ -10,12 +10,17 @@ return {
     "williamboman/mason-lspconfig.nvim",
     dependencies = { "williamboman/mason.nvim" },
     config = function()
+      local ensure = { "lua_ls", "gopls" }
+
+      -- Mason's npm installs break on WSL due to symlink permissions.
+      -- On macOS, let Mason handle everything; on Linux, install npm-based
+      -- servers globally via bun instead (see packages.ts).
+      if vim.fn.has("mac") == 1 then
+        vim.list_extend(ensure, { "ts_ls", "eslint" })
+      end
+
       require("mason-lspconfig").setup({
-        -- ts_ls and eslint installed globally via bun (npm symlinks break on WSL)
-        ensure_installed = {
-          "lua_ls",
-          "gopls",
-        },
+        ensure_installed = ensure,
       })
     end,
   },
