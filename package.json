@@ -1,0 +1,15 @@
+{
+  "name": "dotfiles",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "bun run setup.ts"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "@inquirer/prompts": "^7.3.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

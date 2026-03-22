@@ -2,7 +2,8 @@
 # Fish shell configuration
 
 if status is-interactive
-    # Commands to run in interactive sessions can go here
+    # Check for dotfiles drift (once per day)
+    dotfiles_check
 
     # Auto-install Fisher if not present
     if not functions -q fisher
@@ -15,13 +16,29 @@ if status is-interactive
 end
 
 # Set PATH
-set -gx PATH /usr/local/bin /opt/homebrew/bin /opt/homebrew/sbin $PATH
+# Homebrew (macOS)
+if test -d /opt/homebrew/bin
+    set -gx PATH /opt/homebrew/bin /opt/homebrew/sbin $PATH
+else if test -d /usr/local/bin
+    set -gx PATH /usr/local/bin $PATH
+end
+
+# Linuxbrew
+if test -d /home/linuxbrew/.linuxbrew/bin
+    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
+end
+
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/.bun/bin $PATH
 
 # Rancher Desktop
 if test -d "$HOME/.rd/bin"
     set -gx PATH $HOME/.rd/bin $PATH
+end
+
+# Go
+if test -d "$HOME/go/bin"
+    set -gx PATH $HOME/go/bin $PATH
 end
 
 # Initialize Starship prompt
@@ -43,3 +60,8 @@ set -gx BUN_INSTALL "$HOME/.bun"
 
 # Disable greeting
 set fish_greeting
+
+# Source machine-local overrides (not tracked in git)
+if test -f $HOME/.config/fish/config.local.fish
+    source $HOME/.config/fish/config.local.fish
+end

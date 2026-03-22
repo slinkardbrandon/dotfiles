@@ -7,16 +7,13 @@
 [user]
 	name = Brandon
 	email = slinkardbrandon@gmail.com
-	# Uncomment and set your GPG signing key after importing it:
-	# To set up GPG signing:
-	# 1. Import your GPG key: gpg --import your-private-key.asc
-	# 2. List keys: gpg --list-secret-keys --keyid-format=long
-	# 3. Set the key here and uncomment the lines below
-	# signingkey = YOUR_GPG_KEY_ID
 
 [commit]
-	# Uncomment to enable GPG signing for all commits
-	# gpgsign = true
+	gpgsign = true
+
+# Machine-specific overrides (GPG key ID, gpg program path, etc.)
+[include]
+	path = ~/.gitconfig.local
 
 [push]
 	autoSetupRemote = true

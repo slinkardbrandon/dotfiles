@@ -2,147 +2,38 @@
 
 ################################################################################
 # bootstrap.sh
-# Install Xcode Command Line Tools and Homebrew
+# Minimal shim: install Bun (if needed), install deps, run setup
 ################################################################################
 
 set -e
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+# Ensure bun's install location is in PATH for this session
+export PATH="$HOME/.bun/bin:$PATH"
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
+# Cache sudo credentials upfront, keep alive in background
+echo "This setup needs sudo for some steps (installing packages, setting shell, etc.)"
+sudo -v
+while true; do sudo -n true; sleep 55; kill -0 "$$" || exit; done 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
+trap "kill $SUDO_KEEPALIVE_PID 2>/dev/null" EXIT
 
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Install Xcode Command Line Tools
-if xcode-select -p &> /dev/null; then
-    print_success "Xcode Command Line Tools already installed"
-else
-    print_info "Installing Xcode Command Line Tools..."
-    xcode-select --install
-    
-    # Wait for installation to complete
-    print_warning "Please complete the Xcode installation dialog..."
-    until xcode-select -p &> /dev/null; do
-        sleep 5
-    done
-    
-    print_success "Xcode Command Line Tools installed!"
+# Ensure unzip is available (needed for Bun installer)
+if ! command -v unzip &>/dev/null && [[ "$OSTYPE" != "darwin"* ]]; then
+  echo "Installing unzip..."
+  sudo apt install -y unzip
 fi
 
-# Agree to Xcode license (only if full Xcode is installed)
-if command -v xcodebuild &> /dev/null && xcodebuild -version &> /dev/null; then
-    if ! sudo xcodebuild -license status &> /dev/null; then
-        print_info "Accepting Xcode license..."
-        sudo xcodebuild -license accept
-    fi
+# Install Bun if not present
+if ! command -v bun &>/dev/null; then
+  echo "Installing Bun..."
+  curl -fsSL https://bun.sh/install | bash
 fi
 
-# Install Homebrew
-if command -v brew &> /dev/null; then
-    print_success "Homebrew already installed"
-    print_info "Updating Homebrew..."
-    brew update
-else
-    print_info "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    
-    # Add Homebrew to PATH for current session
-    if [[ $(uname -m) == 'arm64' ]]; then
-        export PATH="/opt/homebrew/bin:$PATH"
-    else
-        export PATH="/usr/local/bin:$PATH"
-    fi
+# Install dependencies
+cd "$DOTFILES_DIR"
+bun install
 
-    print_success "Homebrew installed!"
-fi
-
-# Verify Homebrew is available
-if ! command -v brew &> /dev/null; then
-    print_error "Homebrew installation failed or not in PATH"
-    print_error "Please install Homebrew manually: https://brew.sh"
-    exit 1
-fi
-
-print_success "Homebrew is ready"
-
-# Install packages from Brewfile
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/dotfiles}"
-if [ -f "$DOTFILES_DIR/Brewfile" ]; then
-    print_info "Installing packages from Brewfile..."
-    brew bundle --file="$DOTFILES_DIR/Brewfile" || {
-        print_warning "Some packages may have failed (likely conflicts with manually installed apps)"
-        print_info "This is expected on existing systems and won't affect functionality"
-    }
-    print_success "Package installation complete"
-else
-    print_warning "Brewfile not found, skipping package installation"
-fi
-
-print_info "Node.js will be managed via NVM (installed via Fish plugin)"
-
-# Install Alacritty manually (Homebrew cask is deprecated)
-if [ ! -d "/Applications/Alacritty.app" ]; then
-    print_info "Installing Alacritty..."
-    
-    # Get latest version from GitHub API
-    ALACRITTY_VERSION=$(curl -fsSL https://api.github.com/repos/alacritty/alacritty/releases/latest | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
-    
-    if [ -z "$ALACRITTY_VERSION" ]; then
-        print_error "Failed to fetch latest Alacritty version"
-    else
-        print_info "Latest Alacritty version: $ALACRITTY_VERSION"
-        ALACRITTY_DMG="/tmp/Alacritty.dmg"
-        
-        curl -fsSL "https://github.com/alacritty/alacritty/releases/download/${ALACRITTY_VERSION}/Alacritty-${ALACRITTY_VERSION}.dmg" -o "$ALACRITTY_DMG"
-        
-        # Mount DMG
-        hdiutil attach "$ALACRITTY_DMG" -nobrowse -quiet
-        
-        # Copy app to Applications
-        cp -R "/Volumes/Alacritty/Alacritty.app" /Applications/
-        
-        # Unmount DMG
-        hdiutil detach "/Volumes/Alacritty" -quiet
-        
-        # Clean up
-        rm "$ALACRITTY_DMG"
-        
-        print_success "Alacritty $ALACRITTY_VERSION installed"
-    fi
-else
-    print_success "Alacritty already installed"
-fi
-
-# Post-install configuration
-print_info "Configuring installed tools..."
-
-# Set Chrome as default browser
-if command -v defaultbrowser &> /dev/null; then
-    defaultbrowser chrome 2>/dev/null || true
-    print_success "Set Chrome as default browser"
-fi
-
-# Initialize git-lfs
-if command -v git-lfs &> /dev/null; then
-    git lfs install
-    print_success "Git LFS initialized"
-fi
-
-print_success "Bootstrap complete!"
+# Run setup
+bun run setup.ts "$@"

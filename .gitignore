@@ -8,6 +8,13 @@
 
 # Fish shell
 fish_variables
+*.local.fish
+
+# Fisher-managed functions (auto-installed from fish_plugins)
+fish/functions/fisher.fish
+fish/functions/__z*.fish
+fish/functions/_nvm*.fish
+fish/functions/nvm.fish
 
 # Editor directories and files
 .vscode/
@@ -19,6 +26,13 @@ fish_variables
 # OS generated files
 Thumbs.db
 
+# Dotfiles drift check stamp
+.last-drift-check
+
 # Temporary files
 *.tmp
 *.temp
+
+# Bun
+node_modules/
+bun.lockb

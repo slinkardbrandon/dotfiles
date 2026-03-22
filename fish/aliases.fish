@@ -49,7 +49,13 @@ alias fishconfig='$EDITOR ~/.config/fish/config.fish'
 
 # Network
 alias ip='curl ifconfig.me'
-alias localip='ipconfig getifaddr en0'
+# Local IP: platform-aware
+switch (uname)
+    case Darwin
+        alias localip='ipconfig getifaddr en0'
+    case '*'
+        alias localip='hostname -I | awk \'{print $1}\''
+end
 
 # System
 alias cleanup='find . -type f -name "*.DS_Store" -ls -delete'
@@ -63,3 +69,8 @@ alias dpsa='docker ps -a'
 # Yarn/npm shortcuts
 alias y='yarn'
 alias n='npm'
+
+# Source machine-local aliases (not tracked in git)
+if test -f $HOME/.config/fish/aliases.local.fish
+    source $HOME/.config/fish/aliases.local.fish
+end
