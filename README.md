@@ -1,315 +1,108 @@
-# 🏠 Dotfiles
+# Dotfiles
 
-My personal macOS dotfiles with automated setup for a new machine.
+Cross-platform dotfiles for **macOS** and **Ubuntu/WSL**.
 
-## ⚡️ Quick Install
-
-Run this one-liner to set up a new machine:
+## Quick Install
 
 ```bash
+# One-liner (clones repo + runs setup)
 curl -fsSL https://raw.githubusercontent.com/slinkardbrandon/dotfiles/main/install.sh | bash
+
+# Or manually
+git clone https://github.com/slinkardbrandon/dotfiles.git ~/dotfiles
+bash ~/dotfiles/bootstrap.sh
 ```
 
-## 🎯 What's Included
+The setup is interactive — it prompts for each step (packages, symlinks, shell, keys).
 
-- **Fish Shell**: Fast, modern shell with sensible defaults
-- **Git Configuration**: Pre-configured with common aliases and settings
-- **macOS Defaults**: Optimized system preferences
-- **Custom Functions**: Useful utilities for daily development
-- **Homebrew Packages**: Essential development tools
-- **Fisher Plugins**: nvm.fish and z (directory jumper)
-- **Alacritty Terminal**: Pre-configured with Nord theme and FiraCode Nerd Font
-- **Rectangle**: Window management tool
-- **Chrome**: Set as default browser
+## What's Included
 
-### Applications Installed via Homebrew
+### Shell & Terminal
+- **Fish Shell** with Starship prompt, Fisher plugin manager
+- **Alacritty** terminal config (Tokyo Night theme, FiraCode Nerd Font)
+- **Tmux** with `Ctrl+a` prefix, vim-style pane navigation, Tokyo Night status bar
 
-The setup will automatically install:
+### Editor
+- **Neovim** with custom Lua config:
+  - Telescope (fuzzy finder — `Space f` / `Space p`)
+  - LSP: TypeScript, ESLint, Go, Lua (auto-complete, go-to-definition, etc.)
+  - Prettier format-on-save (only when prettier config detected)
+  - DAP debugging with Jest/Vitest single-test support
+  - Neo-tree file explorer, gitsigns, bufferline, which-key
+  - Tokyo Night theme
 
-- **Google Chrome** (and set as default browser)
-- **Alacritty** (terminal with custom config)
-- **Rectangle** (window management)
-- **FiraCode Nerd Font** (for terminal)
+### Git
+- Aliases, pull rebase, auto-setup remote
+- GPG commit signing (key stored in `~/.gitconfig.local`)
+- Global gitignore
 
-### Applications to Install Manually
+### Packages (auto-installed)
+ripgrep, fd, bat, eza, fzf, jq, tree, htop, gh, git-lfs, go, tmux, neovim
 
-You'll need to download and install these separately:
+**macOS extras:** Homebrew casks (Chrome, Rectangle, 1Password, VS Code, Obsidian), macOS defaults, Dock cleanup
 
-- **1Password** - Password manager
-- **VS Code** - Code editor
-- **Obsidian** - Note-taking app
+## How It Works
 
-## 📦 Features
-
-### Fish Shell Configuration
-
-- **Starship Prompt**: Beautiful, fast, customizable prompt
-- **NVM Integration**: Node version management via nvm.fish
-- **Z Directory Jumper**: Quick navigation to frequent directories
-- **Path Setup**: Homebrew, Cargo, Bun, and more
-- **Custom Aliases**: Minimal, essential shortcuts
-
-### Git Aliases
-
-- `g` → `git`
-- `ga` → `git add`
-- `gc` → `git commit`
-- `gp` → `git push`
-
-### Custom Fish Functions
-
-- **`commit`** - Git commit with optional timestamp manipulation
-
-  ```bash
-  commit "feat: add feature"          # Normal commit
-  commit "fix: bug fix" -30m          # 30 minutes in the past
-  commit "feat: new thing" 5h         # 5 hours in the future
-  ```
-
-- **`killport`** - Kill process running on a specific port
-
-  ```bash
-  killport 3000
-  ```
-
-- **`dprune`** - Clean up Docker containers, images, and networks
-
-  ```bash
-  dprune
-  ```
-
-- **`dnuke`** - Nuclear option: remove ALL Docker data
-
-  ```bash
-  dnuke
-  ```
-
-- **`mkcd`** - Create directory and cd into it
-
-  ```bash
-  mkcd ~/projects/new-project
-  ```
-
-- **`extract`** - Extract any archive format
-
-  ```bash
-  extract archive.tar.gz
-  ```
-
-- **`z`** - Jump to frequently used directories (via Fisher plugin)
-  ```bash
-  z documents  # Jump to ~/Documents
-  z proj       # Jump to ~/projects/my-project
-  ```
-
-### macOS Defaults
-
-The setup configures sensible macOS defaults including:
-
-- **UI/UX**: Dark mode enabled, no boot sound
-- **Finder**: Show hidden files, extensions, path bar, status bar
-- **Keyboard**: Fast key repeat rate (KeyRepeat=2, InitialKeyRepeat=11), press-and-hold disabled
-- **Trackpad**: Tap to click enabled
-- **Screenshots**: Selection tool by default, save to Desktop in PNG
-- **Dock**: Auto-hide, small size (48px), faster animations
-- **Security**: Require password immediately after sleep
-- **Performance**: Disable animations where possible
-- **Hot Corners**: Bottom-right for Quick Note
-
-### Development Tools
-
-Installed via Homebrew:
-
-- **Languages**: Go
-- **Git Tools**: git-lfs, gpg, gnupg, pinentry-mac
-- **CLI Utilities**: curl, wget, jq, tree, htop, ripgrep, fd, bat, exa, fzf
-- **macOS Tools**: defaultbrowser
-
-## 📁 Structure
+The setup is **Bun + TypeScript** — `bootstrap.sh` installs Bun, then everything runs through `setup.ts`.
 
 ```
 dotfiles/
-├── install.sh              # Main installation script
-├── bootstrap.sh            # Xcode CLI Tools & Homebrew
-├── scripts/
-│   ├── setup-fish.sh      # Fish shell installation & setup
-│   └── symlink.sh         # Create symlinks for configs
-├── macos/
-│   └── defaults.sh        # macOS system preferences
-├── fish/
-│   ├── config.fish        # Main fish configuration
-│   ├── aliases.fish       # Shell aliases
-│   ├── fish_plugins       # Fisher plugin list
-│   └── functions/         # Custom fish functions
-│       ├── commit.fish
-│       ├── killport.fish
-│       ├── dprune.fish
-│       ├── dnuke.fish
-│       ├── mkcd.fish
-│       └── extract.fish
-├── git/
-│   ├── .gitconfig         # Git configuration
-│   └── .gitignore_global  # Global gitignore patterns
-├── alacritty/
-│   └── alacritty.toml     # Alacritty terminal config
-└── scripts/
-    ├── setup-fish.sh      # Fish shell installation
-    ├── setup-keys.sh      # GPG & SSH key setup
-    └── symlink.sh         # Create symlinks
+├── bootstrap.sh          # installs bun, runs setup.ts
+├── setup.ts              # interactive orchestrator
+├── src/                  # setup modules (packages, symlinks, fish, keys, macos)
+├── fish/                 # shell config + functions (symlinked)
+├── nvim/                 # neovim config (symlinked as directory)
+├── tmux/                 # tmux.conf (symlinked)
+├── git/                  # .gitconfig + .gitignore_global (symlinked)
+├── alacritty/            # alacritty.toml (symlinked)
+└── claude/               # claude code settings (symlinked)
 ```
 
-## 🚀 Manual Installation
+All configs are **symlinked**, not copied — edit in `~/dotfiles/`, changes take effect immediately.
 
-If you prefer to run steps manually:
+## Machine-Specific Config
 
-1. **Clone the repository**:
+Shared config lives in the repo. Machine-specific stuff goes in local override files (gitignored):
 
-   ```bash
-   git clone https://github.com/slinkardbrandon/dotfiles.git ~/dotfiles
-   cd ~/dotfiles
-   ```
+| What | File |
+|---|---|
+| Fish config | `~/.config/fish/config.local.fish` |
+| Fish aliases | `~/.config/fish/aliases.local.fish` |
+| Git (GPG key, etc.) | `~/.gitconfig.local` |
 
-2. **Run bootstrap** (Xcode CLI Tools & Homebrew):
+## Keeping In Sync
 
-   ```bash
-   bash bootstrap.sh
-   ```
+A drift checker runs once per day when you open a terminal:
+- Warns about uncommitted changes in `~/dotfiles/`
+- Warns if you're behind or ahead of remote
 
-3. **Set up Fish shell**:
+New fish functions created via `funcsave` automatically land in the repo (the functions directory is symlinked).
 
-   ```bash
-   bash scripts/setup-fish.sh
-   ```
+## Key Bindings
 
-4. **Create symlinks**:
+### Neovim
+| Key | Action |
+|---|---|
+| `Space f` / `Space p` | Find files |
+| `Space P` | Command palette |
+| `Space sg` | Search grep across files |
+| `Space e` | File explorer |
+| `gd` / `gr` / `gi` | Go to definition / references / implementation |
+| `K` | Hover docs |
+| `Space ca` | Code action |
+| `Space rn` | Rename symbol |
+| `Space cf` | Format file |
+| `Space db` | Toggle breakpoint |
+| `Space dc` | Debug continue/start |
+| `Space gb` | Git blame line |
 
-   ```bash
-   bash scripts/symlink.sh
-   ```
-
-5. **Set up GPG & SSH keys** (optional):
-
-   ```bash
-   bash scripts/setup-keys.sh
-   ```
-
-   This script will:
-
-   - Install pinentry-mac, gpg, and gh (if needed)
-   - Generate SSH keys (ed25519)
-   - Generate GPG keys (4096-bit RSA)
-   - Configure GPG agent for commit signing
-   - Set up SSH config for GitHub
-   - Optionally upload keys to GitHub via GitHub CLI
-   - Create encrypted backups of your keys
-
-6. **Set macOS defaults** (optional):
-
-   ```bash
-   bash macos/defaults.sh
-   ```
-
-7. **Restart your terminal**:
-   ```bash
-   exec fish
-   ```
-
-## 🔧 Customization
-
-### Update Git User Info
-
-Edit `git/.gitconfig` and update:
-
-```ini
-[user]
-    name = Your Name
-    email = your.email@example.com
-```
-
-### Set Up GPG Signing (Optional)
-
-If you want to sign your commits with GPG:
-
-1. **Generate a new GPG key** (if you don't have one):
-
-   ```bash
-   gpg --full-generate-key
-   ```
-
-   Choose RSA and RSA, 4096 bits, and follow the prompts.
-
-2. **List your GPG keys** to get the key ID:
-
-   ```bash
-   gpg --list-secret-keys --keyid-format=long
-   ```
-
-   Look for the line like `sec   rsa4096/YOUR_KEY_ID` - copy that key ID.
-
-3. **Configure Git to use your key**:
-   Edit `git/.gitconfig` and uncomment/update:
-
-   ```ini
-   [user]
-       signingkey = YOUR_KEY_ID
-
-   [commit]
-       gpgsign = true
-   ```
-
-4. **Export your public key to GitHub/GitLab**:
-
-   ```bash
-   gpg --armor --export YOUR_KEY_ID
-   ```
-
-   Copy the output and add it to your Git provider's SSH/GPG keys settings.
-
-5. **Configure GPG to use pinentry-mac**:
-   ```bash
-   echo "pinentry-program /opt/homebrew/bin/pinentry-mac" >> ~/.gnupg/gpg-agent.conf
-   gpgconf --kill gpg-agent
-   ```
-
-### Add More Homebrew Packages
-
-Edit `bootstrap.sh` and add packages to the `brew install` commands.
-
-### Customize macOS Defaults
-
-Edit `macos/defaults.sh` to add or remove system preferences.
-
-### Add Fisher Plugins
-
-Edit `fish/fish_plugins` and add plugin repositories, then run:
-
-```bash
-fisher update
-```
-
-## 🔄 Updating
-
-To update your dotfiles on an already configured machine:
-
-```bash
-cd ~/dotfiles
-git pull
-bash scripts/symlink.sh
-fisher update
-```
-
-## 📝 Notes
-
-- The installer is idempotent - safe to run multiple times
-- Existing files are backed up with `.backup` extension
-- macOS defaults require a logout/restart to fully take effect
-- Fish shell will become your default after installation
-- Fisher plugins (nvm.fish, z) will be auto-installed
-
-## 🤝 Credits
-
-Inspired by the dotfiles community and various macOS setup scripts.
-
-## 📄 License
-
-MIT License - feel free to use and modify as needed.
+### Tmux
+| Key | Action |
+|---|---|
+| `Ctrl+a c` | New window |
+| `Ctrl+a \|` | Split right |
+| `Ctrl+a -` | Split down |
+| `Ctrl+a h/j/k/l` | Navigate panes |
+| `Alt+1-5` | Switch window |
+| `Ctrl+a d` | Detach |
+| `Ctrl+a r` | Reload config |
