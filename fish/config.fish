@@ -28,6 +28,7 @@ if test -d /home/linuxbrew/.linuxbrew/bin
     set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
 end
 
+set -gx PATH $HOME/.local/bin $PATH
 set -gx PATH $HOME/.cargo/bin $PATH
 set -gx PATH $HOME/.bun/bin $PATH
 

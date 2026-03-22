@@ -13,9 +13,12 @@ return {
       filesystem = {
         follow_current_file = { enabled = true },
         filtered_items = {
-          visible = true,
+          visible = false,
           hide_dotfiles = false,
-          hide_gitignored = false,
+          hide_gitignored = true,
+          hide_by_name = {
+            ".git",
+          },
         },
       },
       window = {
