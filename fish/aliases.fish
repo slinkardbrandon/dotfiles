@@ -68,7 +68,7 @@ alias cleanup='find . -type f -name "*.DS_Store" -ls -delete'
 
 # Docker shortcuts
 alias d='docker'
-alias dc='docker-compose'
+alias dc='docker compose'
 alias dps='docker ps'
 alias dpsa='docker ps -a'
 
