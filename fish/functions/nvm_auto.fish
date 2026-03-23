@@ -7,7 +7,10 @@ function nvm_auto --on-variable PWD --description 'Auto-switch Node version on c
     if test -n "$nvmrc"
         read -l ver <$nvmrc
         if test "$ver" != "$nvm_current_version"
-            nvm use --silent $ver
+            if not nvm use --silent $ver 2>/dev/null
+                echo "nvm: Node $ver not installed — installing..."
+                nvm install $ver
+            end
         end
     else if set -q nvm_current_version
         and set -q nvm_default_version
