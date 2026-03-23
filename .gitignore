@@ -33,6 +33,13 @@ Thumbs.db
 *.tmp
 *.temp
 
+# Machine-local configs
+*.local.yaml
+anthropic-proxy.json
+claude/
+.claude/
+fish/functions/anthropic_proxy.fish
+
 # Bun
 node_modules/
 bun.lockb
