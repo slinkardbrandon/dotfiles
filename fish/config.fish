@@ -62,6 +62,9 @@ set -gx BUN_INSTALL "$HOME/.bun"
 # Disable greeting
 set fish_greeting
 
+# Default Node version (ensures `node` is on PATH; .nvmrc per-project overrides)
+nvm use default --silent 2>/dev/null; or nvm use 24 --silent 2>/dev/null
+
 # Source machine-local overrides (not tracked in git)
 if test -f $HOME/.config/fish/config.local.fish
     source $HOME/.config/fish/config.local.fish
