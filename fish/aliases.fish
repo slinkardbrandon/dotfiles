@@ -43,6 +43,11 @@ if command -v bat >/dev/null 2>&1
     alias cat='bat'
 end
 
+# Vim -> Neovim
+if command -v nvim >/dev/null 2>&1
+    alias vim='nvim'
+end
+
 # Quick edits
 alias reload='source ~/.config/fish/config.fish'
 alias fishconfig='$EDITOR ~/.config/fish/config.fish'
