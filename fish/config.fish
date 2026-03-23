@@ -62,8 +62,9 @@ set -gx BUN_INSTALL "$HOME/.bun"
 # Disable greeting
 set fish_greeting
 
-# nvm.fish: auto-switch Node version on cd (reads .nvmrc), default to latest installed
+# nvm.fish: default to latest installed, auto-switch on cd via .nvmrc
 set -gx nvm_default_version latest
+nvm_auto
 
 # Source machine-local overrides (not tracked in git)
 if test -f $HOME/.config/fish/config.local.fish
