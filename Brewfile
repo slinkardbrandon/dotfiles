@@ -5,6 +5,7 @@ brew "starship"
 brew "tmux"
 brew "neovim"
 brew "tree-sitter-cli"
+brew "claude-code"
 
 # Development tools
 brew "curl"
