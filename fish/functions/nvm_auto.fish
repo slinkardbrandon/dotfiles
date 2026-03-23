@@ -1,11 +1,21 @@
 function nvm_auto --on-variable PWD --description 'Auto-switch Node version on cd via .nvmrc'
     test ! -t 0 && return
 
-    set -l nvmrc (_nvm_find_up $PWD .nvmrc)
-    or set nvmrc (_nvm_find_up $PWD .node-version)
+    # Walk up from PWD looking for .nvmrc or .node-version
+    set -l dir $PWD
+    set -l ver ""
+    while test -n "$dir"
+        if test -f "$dir/.nvmrc"
+            read ver <"$dir/.nvmrc"
+            break
+        else if test -f "$dir/.node-version"
+            read ver <"$dir/.node-version"
+            break
+        end
+        set dir (string replace -r '/[^/]*$' '' $dir)
+    end
 
-    if test -n "$nvmrc"
-        read -l ver <$nvmrc
+    if test -n "$ver"
         if test "$ver" != "$nvm_current_version"
             if not nvm use --silent $ver 2>/dev/null
                 echo "nvm: Node $ver not installed — installing..."
