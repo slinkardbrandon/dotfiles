@@ -1,10 +1,16 @@
-import { log, run } from "./utils";
+import { log, run, DOTFILES_DIR } from "./utils";
 import { type Platform, commandExists } from "./platform";
 
-// Packages available on both platforms
-const COMMON_PACKAGES = [
+// APT package name overrides (where name differs from Homebrew)
+const APT_NAME_MAP: Record<string, string> = {
+  fd: "fd-find",
+  gnupg: "gnupg2",
+  go: "golang",
+};
+
+// Packages to install via apt on Linux
+const LINUX_APT_PACKAGES = [
   "git",
-  "fish",
   "curl",
   "wget",
   "jq",
@@ -13,23 +19,13 @@ const COMMON_PACKAGES = [
   "ripgrep",
   "fd",
   "bat",
-  "eza",
   "fzf",
-  "gh",
   "git-lfs",
   "gnupg",
   "go",
   "tmux",
-  "neovim",
   "make",
-] as const;
-
-// APT package name overrides (where name differs from Homebrew)
-const APT_NAME_MAP: Record<string, string> = {
-  fd: "fd-find",
-  gnupg: "gnupg2",
-  go: "golang",
-};
+];
 
 // Packages that need special installation on Linux (not in default apt repos)
 const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
@@ -41,7 +37,6 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
   eza: async () => {
     if (await commandExists("eza")) return;
     log.info("Installing eza...");
-    // eza is available in Ubuntu 24.04+ repos, otherwise use cargo
     try {
       await run(["sudo", "apt", "install", "-y", "eza"]);
     } catch {
@@ -87,22 +82,6 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
   },
 };
 
-const MACOS_ONLY_PACKAGES = [
-  "pinentry-mac",
-  "defaultbrowser",
-  "dockutil",
-];
-
-const MACOS_CASKS = [
-  "google-chrome",
-  "font-fira-code-nerd-font",
-  "rectangle",
-  "localsend",
-  "1password",
-  "visual-studio-code",
-  "obsidian",
-];
-
 async function installHomebrew() {
   if (await commandExists("brew")) {
     log.success("Homebrew already installed");
@@ -127,33 +106,8 @@ async function installXcodeTools() {
   }
 }
 
-async function installWithBrew(packages: string[]) {
-  for (const pkg of packages) {
-    log.info(`Installing ${pkg}...`);
-    try {
-      await run(["brew", "install", pkg]);
-    } catch {
-      log.warning(`Failed to install ${pkg}, may already be installed`);
-    }
-  }
-}
-
-async function installCasks(casks: string[]) {
-  for (const cask of casks) {
-    log.info(`Installing ${cask}...`);
-    try {
-      await run(["brew", "install", "--cask", cask]);
-    } catch {
-      log.warning(`Failed to install cask ${cask}, may already be installed`);
-    }
-  }
-}
-
 async function installWithApt(packages: string[]) {
-  // Filter out packages that need special installation
-  const aptPackages = packages
-    .filter((pkg) => !LINUX_SPECIAL_INSTALL[pkg])
-    .map((pkg) => APT_NAME_MAP[pkg] || pkg);
+  const aptPackages = packages.map((pkg) => APT_NAME_MAP[pkg] || pkg);
 
   if (aptPackages.length > 0) {
     log.info("Updating apt...");
@@ -162,8 +116,9 @@ async function installWithApt(packages: string[]) {
     await run(["sudo", "apt", "install", "-y", ...aptPackages]);
   }
 
-  // Handle special installations
-  for (const pkg of packages) {
+  // Handle packages that need special installation
+  const specialPackages = ["starship", "eza", "gh", "neovim", "fish"];
+  for (const pkg of specialPackages) {
     if (LINUX_SPECIAL_INSTALL[pkg]) {
       await LINUX_SPECIAL_INSTALL[pkg]();
     }
@@ -197,10 +152,16 @@ export async function installPackages(platform: Platform) {
   if (platform === "macos") {
     await installXcodeTools();
     await installHomebrew();
-    await installWithBrew([...COMMON_PACKAGES, "starship", ...MACOS_ONLY_PACKAGES]);
-    await installCasks(MACOS_CASKS);
+
+    // Brewfile is the single source of truth for macOS packages
+    log.info("Installing packages from Brewfile...");
+    try {
+      await run(["brew", "bundle", "--file", `${DOTFILES_DIR}/Brewfile`, "--no-upgrade"]);
+    } catch {
+      log.warning("Some packages may have failed (likely conflicts with manually installed apps)");
+    }
   } else {
-    await installWithApt([...COMMON_PACKAGES, "starship"]);
+    await installWithApt(LINUX_APT_PACKAGES);
     await installLinuxFonts();
 
     // Install npm-based LSP tools via bun (Mason's npm symlinks break on WSL)

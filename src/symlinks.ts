@@ -50,7 +50,7 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".tmux.conf"),
   });
 
-  // Claude Code settings (shared permissions, not credentials or local overrides)
+  // Claude Code settings
   links.push({
     source: join(DOTFILES_DIR, "claude", "settings.json"),
     target: join(home, ".claude", "settings.json"),

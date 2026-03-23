@@ -2,6 +2,9 @@
 brew "git"
 brew "fish"
 brew "starship"
+brew "tmux"
+brew "neovim"
+brew "tree-sitter-cli"
 
 # Development tools
 brew "curl"

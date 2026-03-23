@@ -2,7 +2,7 @@
 
 # Window settings
 [window]
-opacity = 0.65
+opacity = 0.95
 blur = true
 
 # Font settings
@@ -48,3 +48,8 @@ background = '#7aa2f7'
 [colors.hints.end]
 foreground = '#7aa2f7'
 background = '#33467c'
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = "\u001B\r"

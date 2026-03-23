@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "setup": "bun run setup.ts"
+    "setup": "bun run setup.ts",
+    "sync": "bun run sync.ts"
   },
   "dependencies": {
     "chalk": "^5.4.1",
