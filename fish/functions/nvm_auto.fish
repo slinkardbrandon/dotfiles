@@ -23,8 +23,9 @@ function nvm_auto --on-variable PWD --description 'Auto-switch Node version on c
             end
         end
     else if set -q nvm_current_version
-        and set -q nvm_default_version
-        and test "$nvm_current_version" != "$nvm_default_version"
-        nvm use --silent $nvm_default_version
+        and set -q _nvm_auto_default
+        and test "$nvm_current_version" != "$_nvm_auto_default"
+        # Revert to whatever version was active at shell startup
+        nvm use --silent $_nvm_auto_default
     end
 end

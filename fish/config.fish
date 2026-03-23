@@ -63,8 +63,9 @@ set -gx BUN_INSTALL "$HOME/.bun"
 set fish_greeting
 
 # nvm.fish: default to latest installed, auto-switch on cd via .nvmrc
+# nvm_default_version is read by conf.d/nvm.fish at startup
+# nvm_auto is bootstrapped in conf.d/nvm_auto.fish (runs after nvm is loaded)
 set -gx nvm_default_version latest
-nvm_auto
 
 # Source machine-local overrides (not tracked in git)
 if test -f $HOME/.config/fish/config.local.fish
