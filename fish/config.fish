@@ -62,9 +62,6 @@ set -gx BUN_INSTALL "$HOME/.bun"
 # Disable greeting
 set fish_greeting
 
-# nvm.fish: auto-switch on cd via .nvmrc
-# nvm_auto is bootstrapped in conf.d/nvm_auto_init.fish (runs after nvm is loaded)
-
 # Source machine-local overrides (not tracked in git)
 if test -f $HOME/.config/fish/config.local.fish
     source $HOME/.config/fish/config.local.fish
