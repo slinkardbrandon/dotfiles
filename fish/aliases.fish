@@ -76,6 +76,9 @@ alias dpsa='docker ps -a'
 alias y='yarn'
 alias n='npm'
 
+# Lazygit
+alias lg='lazygit'
+
 # Source machine-local aliases (not tracked in git)
 if test -f $HOME/.config/fish/aliases.local.fish
     source $HOME/.config/fish/aliases.local.fish

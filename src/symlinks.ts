@@ -1,6 +1,7 @@
 import { existsSync, lstatSync, readlinkSync, readdirSync } from "fs";
 import { join, basename, dirname } from "path";
 import { log, DOTFILES_DIR, run } from "./utils";
+import { detectPlatform } from "./platform";
 
 interface SymlinkEntry {
   source: string;
@@ -54,6 +55,16 @@ function getSymlinks(): SymlinkEntry[] {
   links.push({
     source: join(DOTFILES_DIR, "tmux", "tmux.conf"),
     target: join(home, ".tmux.conf"),
+  });
+
+  // Lazygit configuration (macOS uses ~/Library/Application Support/)
+  const lazygitConfigDir =
+    detectPlatform() === "macos"
+      ? join(home, "Library", "Application Support", "lazygit")
+      : join(home, ".config", "lazygit");
+  links.push({
+    source: join(DOTFILES_DIR, "lazygit", "config.yml"),
+    target: join(lazygitConfigDir, "config.yml"),
   });
 
   // Claude Code settings

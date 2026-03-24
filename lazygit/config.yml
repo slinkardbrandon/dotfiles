@@ -1,0 +1,43 @@
+gui:
+  # Show file icons (requires nerd font — you have FiraCode Nerd Font)
+  nerdFontsVersion: "3"
+  # Border style
+  border: rounded
+  # Tokyo Night theme
+  theme:
+    activeBorderColor:
+      - "#bb9af7"
+      - bold
+    inactiveBorderColor:
+      - "#565f89"
+    searchingActiveBorderColor:
+      - "#7dcfff"
+      - bold
+    optionsTextColor:
+      - "#7aa2f7"
+    selectedLineBgColor:
+      - "#292e42"
+    cherryPickedCommitFgColor:
+      - "#7dcfff"
+    cherryPickedCommitBgColor:
+      - "#292e42"
+    unstagedChangesColor:
+      - "#f7768e"
+    defaultFgColor:
+      - "#c0caf5"
+git:
+  # Auto-fetch every 60 seconds
+  autoFetch: true
+  autoFetchInterval: 60
+  # Show branch graph
+  log:
+    showGraph: always
+  pagers:
+    - colorArg: always
+      pager: >-
+        delta --dark --paging=never --line-numbers --syntax-theme="tokyonight_night" --word-diff-regex="\S+" --minus-style="syntax #4a272f" --minus-emph-style="syntax #6e3040" --plus-style="syntax #243e4a" --plus-emph-style="syntax #2a5f6a" --whitespace-error-style="reverse #c53b53" --line-numbers-minus-style="#823c41" --line-numbers-plus-style="#164846" --line-numbers-zero-style="#565f89"
+os:
+  editPreset: "nvim"
+  open: "tmux new-window nvim -- {{filename}}"
+# Confirm before force push or discard
+disableStartupPopups: true

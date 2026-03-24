@@ -2,6 +2,7 @@
 
 # Window settings
 [window]
+option_as_alt = "Both"
 opacity = 0.95
 blur = true
 

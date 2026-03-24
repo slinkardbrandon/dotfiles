@@ -49,3 +49,7 @@ go "honnef.co/go/tools/cmd/staticcheck"
 
 # Rust packages
 cargo "cargo-edit"
+
+# Lazygit
+brew "lazygit"
+brew "git-delta"
