@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { select, input, confirm } from "@inquirer/prompts";
 import { log, run, runQuiet, DOTFILES_DIR } from "./src/utils";
@@ -183,12 +183,49 @@ async function ensurePersonalSshAlias() {
 
   log.step("Setting up SSH alias for personal GitHub (corporate machine detected)");
 
+  // Show available keys so user can pick the right one
+  const sshFiles = existsSync(sshDir)
+    ? readdirSync(sshDir).filter((f) => {
+        const full = join(sshDir, f);
+        return (
+          statSync(full).isFile() &&
+          !f.endsWith(".pub") &&
+          f !== "config" &&
+          f !== "known_hosts" &&
+          f !== "known_hosts.old" &&
+          f !== "authorized_keys"
+        );
+      })
+    : [];
+
+  if (sshFiles.length > 0) {
+    log.info("SSH keys in ~/.ssh/:");
+    for (const f of sshFiles) {
+      const pub = existsSync(join(sshDir, `${f}.pub`)) ? " (has .pub)" : "";
+      console.log(`    ${f}${pub}`);
+    }
+  }
+
   // Find personal SSH key
-  const defaultKey = `${sshDir}/id_ed25519`;
-  const keyPath = await input({
-    message: "Path to personal SSH key for GitHub:",
-    default: defaultKey,
-  });
+  let keyPath: string;
+  const keyChoices = sshFiles
+    .filter((f) => existsSync(join(sshDir, `${f}.pub`)))
+    .map((f) => ({ name: `~/.ssh/${f}`, value: join(sshDir, f) }));
+
+  if (keyChoices.length > 1) {
+    keyPath = await select({
+      message: "Which SSH key is your personal key for GitHub?",
+      choices: keyChoices,
+    });
+  } else if (keyChoices.length === 1) {
+    keyPath = keyChoices[0].value;
+    log.info(`Using ${keyChoices[0].name}`);
+  } else {
+    keyPath = await input({
+      message: "Path to personal SSH key for GitHub:",
+      default: `${sshDir}/id_ed25519`,
+    });
+  }
 
   if (!existsSync(keyPath)) {
     log.warning(`Key not found at ${keyPath} — skipping SSH alias`);
