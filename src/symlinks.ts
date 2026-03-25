@@ -1,7 +1,7 @@
 import { existsSync, lstatSync, readlinkSync, readdirSync } from "fs";
 import { join, basename, dirname } from "path";
 import { log, DOTFILES_DIR, run } from "./utils";
-import { detectPlatform } from "./platform";
+import { detectPlatform, commandExists } from "./platform";
 
 interface SymlinkEntry {
   source: string;
@@ -67,6 +67,12 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(lazygitConfigDir, "config.yml"),
   });
 
+  // Bat themes (used by delta for syntax highlighting)
+  links.push({
+    source: join(DOTFILES_DIR, "bat", "themes"),
+    target: join(home, ".config", "bat", "themes"),
+  });
+
   // Claude Code settings
   links.push({
     source: join(DOTFILES_DIR, "claude", "settings.json"),
@@ -120,4 +126,14 @@ export async function setupSymlinks() {
 
   log.success("All symlinks created");
   log.info("Fisher plugins will auto-install on first Fish shell launch");
+
+  // Rebuild bat theme cache so delta picks up symlinked themes
+  if (await commandExists("bat")) {
+    try {
+      await run(["bat", "cache", "--build"]);
+      log.success("Bat theme cache rebuilt");
+    } catch {
+      log.warning("Could not rebuild bat cache — run manually: bat cache --build");
+    }
+  }
 }

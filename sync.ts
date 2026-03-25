@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "fs";
+import { join } from "path";
 import { select, input, confirm } from "@inquirer/prompts";
 import { log, run, runQuiet, DOTFILES_DIR } from "./src/utils";
 import { setupSymlinks } from "./src/symlinks";
@@ -6,6 +7,7 @@ import { commandExists, detectPlatform } from "./src/platform";
 import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
 
 const HOME = process.env.HOME!;
+const SSH_DIR = join(HOME, ".ssh");
 
 interface GpgKey {
   id: string;
@@ -56,6 +58,74 @@ function writeGitIdentity(path: string, name: string, email: string, signingKey:
     content += `\n[commit]\n\tgpgsign = false\n`;
   }
   return Bun.write(path, content);
+}
+
+async function ensureSshKeyExists() {
+  const ed25519 = join(SSH_DIR, "id_ed25519");
+  const rsa = join(SSH_DIR, "id_rsa");
+
+  if (existsSync(ed25519) || existsSync(rsa)) {
+    const keyType = existsSync(ed25519) ? "ed25519" : "rsa";
+    log.info(`SSH key found (~/.ssh/id_${keyType})`);
+    return;
+  }
+
+  log.warning("No SSH key found (~/.ssh/id_ed25519 or id_rsa)");
+
+  const generate = await confirm({ message: "Generate a new SSH key?" });
+  if (!generate) {
+    log.info("Skipping SSH key generation");
+    return;
+  }
+
+  // Try to read email from existing git identity files
+  let defaultEmail = "";
+  for (const cfg of [`${HOME}/.gitconfig.personal`, `${HOME}/.gitconfig.local`]) {
+    if (existsSync(cfg)) {
+      const match = readFileSync(cfg, "utf8").match(/email\s*=\s*(.+)/);
+      if (match) { defaultEmail = match[1].trim(); break; }
+    }
+  }
+
+  const email = await input({
+    message: "Email for SSH key:",
+    default: defaultEmail || undefined,
+  });
+
+  await run(["mkdir", "-p", SSH_DIR]);
+  await run(["chmod", "700", SSH_DIR]);
+  await run(["ssh-keygen", "-t", "ed25519", "-C", email, "-f", ed25519]);
+  log.success(`SSH key generated: ${ed25519}`);
+
+  // Add to ssh-agent
+  const platform = detectPlatform();
+  try {
+    await run(["bash", "-c", 'eval "$(ssh-agent -s)" > /dev/null 2>&1']);
+    if (platform === "macos") {
+      await run(["ssh-add", "--apple-use-keychain", ed25519]);
+    } else {
+      await run(["ssh-add", ed25519]);
+    }
+    log.success("Key added to ssh-agent");
+  } catch {
+    log.warning("Could not add key to ssh-agent — add manually with: ssh-add ~/.ssh/id_ed25519");
+  }
+
+  // Offer to upload to GitHub
+  if (await commandExists("gh")) {
+    const upload = await confirm({ message: "Upload SSH key to GitHub?" });
+    if (upload) {
+      try {
+        await run(["gh", "auth", "status"]);
+        const hostname = (await runQuiet(["hostname"])).trim();
+        const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        await run(["gh", "ssh-key", "add", `${ed25519}.pub`, "--title", `${hostname}-${date}`]);
+        log.success("SSH key uploaded to GitHub");
+      } catch {
+        log.warning("Could not upload — ensure you're authenticated with: gh auth login");
+      }
+    }
+  }
 }
 
 async function ensureGitconfigLocal() {
@@ -170,6 +240,7 @@ async function sync() {
   await setupSymlinks();
 
   // First-time machine setup
+  await ensureSshKeyExists();
   await ensureGitconfigLocal();
   await ensureGitconfigPersonal();
   await ensurePersonalSshAlias();
