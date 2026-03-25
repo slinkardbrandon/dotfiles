@@ -72,9 +72,10 @@ alias dc='docker compose'
 alias dps='docker ps'
 alias dpsa='docker ps -a'
 
-# Yarn/npm shortcuts
+# Yarn/npm/pnpm shortcuts
 alias y='yarn'
 alias n='npm'
+alias p='pnpm'
 
 # Lazygit
 alias lg='lazygit'
