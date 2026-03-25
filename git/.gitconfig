@@ -55,3 +55,6 @@
 
 [mergetool "vscode"]
 	cmd = code --wait $MERGED
+[user]
+	email = slinkardbrandon@gmail.com
+	name = Brandon Slinkard
