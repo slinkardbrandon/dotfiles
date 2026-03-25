@@ -3,6 +3,7 @@ import { select, input, confirm } from "@inquirer/prompts";
 import { log, run, runQuiet, DOTFILES_DIR } from "./src/utils";
 import { setupSymlinks } from "./src/symlinks";
 import { commandExists, detectPlatform } from "./src/platform";
+import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
 
 const HOME = process.env.HOME!;
 
@@ -149,7 +150,7 @@ async function sync() {
   const platform = detectPlatform();
   console.log("\n  dotfiles sync\n");
 
-  // Ensure Brewfile packages are installed (fast — skips already-installed)
+  // Ensure packages are installed (fast — skips already-installed)
   if (platform === "macos" && (await commandExists("brew"))) {
     log.step("Syncing Homebrew packages");
     try {
@@ -157,6 +158,12 @@ async function sync() {
     } catch {
       log.warning("Some packages may have failed (likely already installed via other means)");
     }
+  } else if (platform === "linux") {
+    log.step("Syncing Linux packages");
+    const aptPackages = LINUX_APT_PACKAGES.map((pkg) => APT_NAME_MAP[pkg] || pkg);
+    await run(["sudo", "apt", "update", "-y"]);
+    await run(["sudo", "apt", "upgrade", "-y", ...aptPackages]);
+    await installSpecialPackages();
   }
 
   // Ensure all symlinks are correct

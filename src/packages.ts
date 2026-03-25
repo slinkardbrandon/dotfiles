@@ -2,14 +2,14 @@ import { log, run, DOTFILES_DIR } from "./utils";
 import { type Platform, commandExists } from "./platform";
 
 // APT package name overrides (where name differs from Homebrew)
-const APT_NAME_MAP: Record<string, string> = {
+export const APT_NAME_MAP: Record<string, string> = {
   fd: "fd-find",
   gnupg: "gnupg2",
   go: "golang",
 };
 
 // Packages to install via apt on Linux
-const LINUX_APT_PACKAGES = [
+export const LINUX_APT_PACKAGES = [
   "git",
   "curl",
   "wget",
@@ -69,6 +69,34 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
        sudo apt install -y neovim`,
     ]);
   },
+  lazygit: async () => {
+    if (await commandExists("lazygit")) return;
+    log.info("Installing lazygit...");
+    await run([
+      "bash",
+      "-c",
+      `mkdir -p ~/.local/bin && \
+       LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\\K[^"]*') && \
+       curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_\${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" && \
+       tar xf /tmp/lazygit.tar.gz -C /tmp lazygit && \
+       install /tmp/lazygit ~/.local/bin/ && \
+       rm /tmp/lazygit /tmp/lazygit.tar.gz`,
+    ]);
+  },
+  delta: async () => {
+    if (await commandExists("delta")) return;
+    log.info("Installing delta...");
+    await run([
+      "bash",
+      "-c",
+      `mkdir -p ~/.local/bin && \
+       DELTA_VERSION=$(curl -s "https://api.github.com/repos/dandavison/delta/releases/latest" | grep -Po '"tag_name": "\\K[^"]*') && \
+       curl -Lo /tmp/delta.tar.gz "https://github.com/dandavison/delta/releases/latest/download/delta-\${DELTA_VERSION}-x86_64-unknown-linux-gnu.tar.gz" && \
+       tar xf /tmp/delta.tar.gz -C /tmp && \
+       install /tmp/delta-\${DELTA_VERSION}-x86_64-unknown-linux-gnu/delta ~/.local/bin/ && \
+       rm -rf /tmp/delta.tar.gz /tmp/delta-\${DELTA_VERSION}-x86_64-unknown-linux-gnu`,
+    ]);
+  },
   fish: async () => {
     if (await commandExists("fish")) return;
     log.info("Installing Fish shell...");
@@ -106,6 +134,14 @@ async function installXcodeTools() {
   }
 }
 
+// Run special installers only (idempotent — skips already-installed tools)
+export async function installSpecialPackages() {
+  const specialPackages = Object.keys(LINUX_SPECIAL_INSTALL);
+  for (const pkg of specialPackages) {
+    await LINUX_SPECIAL_INSTALL[pkg]();
+  }
+}
+
 async function installWithApt(packages: string[]) {
   const aptPackages = packages.map((pkg) => APT_NAME_MAP[pkg] || pkg);
 
@@ -117,12 +153,7 @@ async function installWithApt(packages: string[]) {
   }
 
   // Handle packages that need special installation
-  const specialPackages = ["starship", "eza", "gh", "neovim", "fish"];
-  for (const pkg of specialPackages) {
-    if (LINUX_SPECIAL_INSTALL[pkg]) {
-      await LINUX_SPECIAL_INSTALL[pkg]();
-    }
-  }
+  await installSpecialPackages();
 }
 
 async function installLinuxFonts() {
