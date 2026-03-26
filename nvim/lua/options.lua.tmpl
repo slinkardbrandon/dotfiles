@@ -19,16 +19,16 @@ vim.diagnostic.config({
 -- Diagnostic highlight overrides (applied after colorscheme)
 vim.api.nvim_create_autocmd("ColorScheme", {
   callback = function()
-    vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "#ef5350" })
-    vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "#addb67" })
-    vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "#2c1517" })
-    vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "#1e2a15" })
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "{{colors.errorDark}}" })
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "{{colors.warning}}" })
+    vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "{{colors.diagErrorBg}}" })
+    vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "{{colors.diagWarnBg}}" })
   end,
 })
 
 -- Tinted line backgrounds for diagnostics
-vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "#2c1517" })
-vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "#1e2a15" })
+vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "{{colors.diagErrorBg}}" })
+vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "{{colors.diagWarnBg}}" })
 
 vim.api.nvim_create_autocmd("DiagnosticChanged", {
   callback = function()
@@ -127,7 +127,7 @@ opt.updatetime = 250
 opt.timeoutlen = 300
 
 -- Trailing whitespace highlight
-vim.api.nvim_set_hl(0, "TrailingWhitespace", { bg = "#ef5350" })
+vim.api.nvim_set_hl(0, "TrailingWhitespace", { bg = "{{colors.errorDark}}" })
 vim.fn.matchadd("TrailingWhitespace", [[\s\+$]])
 
 -- Strip trailing whitespace on save

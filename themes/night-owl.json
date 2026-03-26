@@ -1,0 +1,48 @@
+{
+  "name": "Night Owl",
+  "slug": "night-owl",
+  "nvim": {
+    "plugin": "oxfist/night-owl.nvim",
+    "colorscheme": "night-owl",
+    "style": "",
+    "transparent": true
+  },
+  "bat": {
+    "syntaxTheme": "night_owl"
+  },
+  "colors": {
+    "bg": "#011627",
+    "fg": "#d6deeb",
+    "accent": "#82aaff",
+    "secondary": "#c792ea",
+    "selection": "#1d3b53",
+    "comment": "#637777",
+    "border": "#122d42",
+    "error": "#ef5350",
+    "errorDark": "#ef5350",
+    "warning": "#addb67",
+    "info": "#82aaff",
+    "hint": "#7fdbca",
+    "hintAlt": "#21c7a8",
+    "infoAlt": "#00589e",
+    "red": "#ef5350",
+    "green": "#22da6e",
+    "yellow": "#addb67",
+    "blue": "#82aaff",
+    "magenta": "#c792ea",
+    "cyan": "#7fdbca",
+    "orange": "#f78c6c",
+    "diagErrorBg": "#2c1517",
+    "diagWarnBg": "#1e2a15",
+    "selectedLineBg": "#1d3b53",
+    "inactiveTabBg": "#0b2942",
+    "inactiveTabFg": "#5f7e97",
+    "diffMinusStyle": "#3b1113",
+    "diffMinusEmph": "#5c1a1e",
+    "diffPlusStyle": "#0d3228",
+    "diffPlusEmph": "#165740",
+    "diffWhitespaceError": "#ef5350",
+    "diffLineNumMinus": "#943c3e",
+    "diffLineNumPlus": "#1a6b4a"
+  }
+}

@@ -1,0 +1,18 @@
+-- DO NOT EDIT — generated from scrollbar.lua.tmpl by theme engine
+return {
+  "petertriho/nvim-scrollbar",
+  dependencies = { "lewis6991/gitsigns.nvim" },
+  config = function()
+    require("scrollbar").setup({
+      handle = { color = "{{colors.selection}}" },
+      marks = {
+        Error = { color = "{{colors.errorDark}}", text = { "█" } },
+        Warn = { color = "{{colors.warning}}", text = { "█" } },
+        Hint = { color = "{{colors.hint}}", text = { "▐" } },
+        Info = { color = "{{colors.infoAlt}}", text = { "▐" } },
+        Search = { color = "{{colors.accent}}", text = { "▐" } },
+      },
+    })
+    require("scrollbar.handlers.gitsigns").setup()
+  end,
+}

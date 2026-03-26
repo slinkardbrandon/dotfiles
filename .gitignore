@@ -40,6 +40,9 @@ claude/
 .claude/
 fish/functions/anthropic_proxy.fish
 
+# Theme engine
+themes/active.txt
+
 # Bun
 node_modules/
 bun.lockb

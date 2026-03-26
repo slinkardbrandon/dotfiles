@@ -20,36 +20,36 @@ bold_italic = { family = "FiraCode Nerd Font Mono", style = "Bold Italic" }
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
-background = '#011627'
-foreground = '#d6deeb'
+background = '{{colors.bg}}'
+foreground = '{{colors.fg}}'
 
 [colors.cursor]
-text = '#011627'
-cursor = '#d6deeb'
+text = '{{colors.bg}}'
+cursor = '{{colors.fg}}'
 
 [colors.vi_mode_cursor]
-text = '#011627'
-cursor = '#d6deeb'
+text = '{{colors.bg}}'
+cursor = '{{colors.fg}}'
 
 [colors.selection]
-text = '#d6deeb'
-background = '#1d3b53'
+text = '{{colors.fg}}'
+background = '{{colors.selection}}'
 
 [colors.search.matches]
-foreground = '#011627'
-background = '#82aaff'
+foreground = '{{colors.bg}}'
+background = '{{colors.accent}}'
 
 [colors.footer_bar]
-background = '#1d3b53'
-foreground = '#d6deeb'
+background = '{{colors.selection}}'
+foreground = '{{colors.fg}}'
 
 [colors.hints.start]
-foreground = '#011627'
-background = '#82aaff'
+foreground = '{{colors.bg}}'
+background = '{{colors.accent}}'
 
 [colors.hints.end]
-foreground = '#82aaff'
-background = '#1d3b53'
+foreground = '{{colors.accent}}'
+background = '{{colors.selection}}'
 
 [[keyboard.bindings]]
 key = "Return"

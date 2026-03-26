@@ -33,6 +33,12 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(fishConfigDir, "conf.d", "nvm_auto_init.fish"),
   });
 
+  // Fish completions — individual symlinks (Fisher owns the dir)
+  links.push({
+    source: join(DOTFILES_DIR, "fish", "completions", "theme.fish"),
+    target: join(fishConfigDir, "completions", "theme.fish"),
+  });
+
   // Git configuration
   links.push(
     { source: join(DOTFILES_DIR, "git", ".gitconfig"), target: join(home, ".gitconfig") },

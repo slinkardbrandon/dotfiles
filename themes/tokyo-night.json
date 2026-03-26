@@ -1,0 +1,48 @@
+{
+  "name": "Tokyo Night",
+  "slug": "tokyo-night",
+  "nvim": {
+    "plugin": "folke/tokyonight.nvim",
+    "colorscheme": "tokyonight",
+    "style": "night",
+    "transparent": true
+  },
+  "bat": {
+    "syntaxTheme": "tokyonight_night"
+  },
+  "colors": {
+    "bg": "#1a1b26",
+    "fg": "#c0caf5",
+    "accent": "#7aa2f7",
+    "secondary": "#bb9af7",
+    "selection": "#33467c",
+    "comment": "#565f89",
+    "border": "#414868",
+    "error": "#f7768e",
+    "errorDark": "#db4b4b",
+    "warning": "#e0af68",
+    "info": "#7dcfff",
+    "hint": "#1abc9c",
+    "hintAlt": "#73daca",
+    "infoAlt": "#0db9d7",
+    "red": "#f7768e",
+    "green": "#73daca",
+    "yellow": "#e0af68",
+    "blue": "#7aa2f7",
+    "magenta": "#bb9af7",
+    "cyan": "#7dcfff",
+    "orange": "#ff9e64",
+    "diagErrorBg": "#2d202a",
+    "diagWarnBg": "#2d2b20",
+    "selectedLineBg": "#292e42",
+    "inactiveTabBg": "#3b2d5e",
+    "inactiveTabFg": "#a9b1d6",
+    "diffMinusStyle": "#4a272f",
+    "diffMinusEmph": "#6e3040",
+    "diffPlusStyle": "#243e4a",
+    "diffPlusEmph": "#2a5f6a",
+    "diffWhitespaceError": "#c53b53",
+    "diffLineNumMinus": "#823c41",
+    "diffLineNumPlus": "#164846"
+  }
+}

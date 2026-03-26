@@ -7,25 +7,25 @@ gui:
   # Theme
   theme:
     activeBorderColor:
-      - "#c792ea"
+      - "{{colors.secondary}}"
       - bold
     inactiveBorderColor:
-      - "#637777"
+      - "{{colors.comment}}"
     searchingActiveBorderColor:
-      - "#7fdbca"
+      - "{{colors.cyan}}"
       - bold
     optionsTextColor:
-      - "#82aaff"
+      - "{{colors.accent}}"
     selectedLineBgColor:
-      - "#1d3b53"
+      - "{{colors.selectedLineBg}}"
     cherryPickedCommitFgColor:
-      - "#7fdbca"
+      - "{{colors.cyan}}"
     cherryPickedCommitBgColor:
-      - "#1d3b53"
+      - "{{colors.selectedLineBg}}"
     unstagedChangesColor:
-      - "#ef5350"
+      - "{{colors.red}}"
     defaultFgColor:
-      - "#d6deeb"
+      - "{{colors.fg}}"
 git:
   # Auto-fetch every 60 seconds
   autoFetch: true
@@ -36,7 +36,7 @@ git:
   pagers:
     - colorArg: always
       pager: >-
-        delta --dark --paging=never --line-numbers --syntax-theme="night_owl" --word-diff-regex="\S+" --minus-style="syntax #3b1113" --minus-emph-style="syntax #5c1a1e" --plus-style="syntax #0d3228" --plus-emph-style="syntax #165740" --whitespace-error-style="reverse #ef5350" --line-numbers-minus-style="#943c3e" --line-numbers-plus-style="#1a6b4a" --line-numbers-zero-style="#637777"
+        delta --dark --paging=never --line-numbers --syntax-theme="{{bat.syntaxTheme}}" --word-diff-regex="\S+" --minus-style="syntax {{colors.diffMinusStyle}}" --minus-emph-style="syntax {{colors.diffMinusEmph}}" --plus-style="syntax {{colors.diffPlusStyle}}" --plus-emph-style="syntax {{colors.diffPlusEmph}}" --whitespace-error-style="reverse {{colors.diffWhitespaceError}}" --line-numbers-minus-style="{{colors.diffLineNumMinus}}" --line-numbers-plus-style="{{colors.diffLineNumPlus}}" --line-numbers-zero-style="{{colors.comment}}"
 os:
   editPreset: "nvim"
   open: 'tmux new-window nvim -- {{filename}}'

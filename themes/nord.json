@@ -1,0 +1,48 @@
+{
+  "name": "Nord",
+  "slug": "nord",
+  "nvim": {
+    "plugin": "shaunsingh/nord.nvim",
+    "colorscheme": "nord",
+    "style": "",
+    "transparent": true
+  },
+  "bat": {
+    "syntaxTheme": "Nord"
+  },
+  "colors": {
+    "bg": "#2e3440",
+    "fg": "#d8dee9",
+    "accent": "#88c0d0",
+    "secondary": "#81a1c1",
+    "selection": "#434c5e",
+    "comment": "#4c566a",
+    "border": "#3b4252",
+    "error": "#bf616a",
+    "errorDark": "#bf616a",
+    "warning": "#ebcb8b",
+    "info": "#81a1c1",
+    "hint": "#a3be8c",
+    "hintAlt": "#8fbcbb",
+    "infoAlt": "#5e81ac",
+    "red": "#bf616a",
+    "green": "#a3be8c",
+    "yellow": "#ebcb8b",
+    "blue": "#5e81ac",
+    "magenta": "#b48ead",
+    "cyan": "#8fbcbb",
+    "orange": "#d08770",
+    "diagErrorBg": "#3d2e31",
+    "diagWarnBg": "#3d3928",
+    "selectedLineBg": "#3b4252",
+    "inactiveTabBg": "#3b4252",
+    "inactiveTabFg": "#4c566a",
+    "diffMinusStyle": "#3f2d30",
+    "diffMinusEmph": "#5c3538",
+    "diffPlusStyle": "#2e3f33",
+    "diffPlusEmph": "#3a5a40",
+    "diffWhitespaceError": "#bf616a",
+    "diffLineNumMinus": "#a5585f",
+    "diffLineNumPlus": "#7b9a7c"
+  }
+}
