@@ -198,7 +198,7 @@ export async function installPackages(platform: Platform) {
     // Install npm-based LSP tools via bun (Mason's npm symlinks break on WSL)
     log.info("Installing LSP tools via bun...");
     try {
-      await run(["bash", "-c", `$HOME/.bun/bin/bun install -g typescript-language-server typescript vscode-langservers-extracted @fsouza/prettierd tree-sitter-cli`]);
+      await run(["bash", "-c", `$HOME/.bun/bin/bun install -g @vtsls/language-server typescript vscode-langservers-extracted @fsouza/prettierd tree-sitter-cli`]);
     } catch {
       log.warning("Failed to install some LSP tools via bun");
     }

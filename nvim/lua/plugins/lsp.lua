@@ -16,7 +16,7 @@ return {
       -- On macOS, let Mason handle everything; on Linux, install npm-based
       -- servers globally via bun instead (see packages.ts).
       if vim.fn.has("mac") == 1 then
-        vim.list_extend(ensure, { "ts_ls", "eslint" })
+        vim.list_extend(ensure, { "vtsls", "eslint" })
       end
 
       require("mason-lspconfig").setup({
@@ -56,11 +56,26 @@ return {
         end,
       })
 
-      -- TypeScript
-      vim.lsp.config.ts_ls = {
-        cmd = { "typescript-language-server", "--stdio" },
+      -- TypeScript (vtsls — supports workspace diagnostics)
+      vim.lsp.config.vtsls = {
+        cmd = { "vtsls", "--stdio" },
         filetypes = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
         capabilities = capabilities,
+        settings = {
+          typescript = {
+            tsserver = {
+              maxTsServerMemory = 4096,
+            },
+          },
+          vtsls = {
+            autoUseWorkspaceTsdk = true,
+            experimental = {
+              completion = {
+                enableServerSideFuzzyMatch = true,
+              },
+            },
+          },
+        },
       }
 
       -- ESLint
@@ -113,7 +128,7 @@ return {
       }
 
       -- Enable all configured servers
-      vim.lsp.enable({ "ts_ls", "eslint", "lua_ls", "gopls" })
+      vim.lsp.enable({ "vtsls", "eslint", "lua_ls", "gopls" })
     end,
   },
 

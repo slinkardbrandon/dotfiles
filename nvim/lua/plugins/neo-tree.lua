@@ -29,7 +29,7 @@ return {
 
     require("neo-tree").setup({
       enable_diagnostics = true,
-      close_if_last_window = true,
+      close_if_last_window = false,
       filesystem = {
         follow_current_file = { enabled = true },
         use_libuv_file_watcher = true,

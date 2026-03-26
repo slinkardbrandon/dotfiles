@@ -1,4 +1,5 @@
 -- Workspace-wide TypeScript diagnostics via tsc --noEmit
+-- Supplements vtsls (which only reports diagnostics for open buffers)
 -- Re-checks on startup, save, and editor focus (like VS Code)
 return {
   dir = ".",
@@ -15,7 +16,12 @@ return {
         local file, lnum, col, severity_str, msg =
           line:match("^(.+)%((%d+),(%d+)%)%: (%w+) (.+)$")
         if file then
-          local abs = vim.fn.fnamemodify(file, ":p")
+          -- tsc outputs paths relative to its cwd (tsc_root)
+          local abs = file
+          if not vim.startswith(file, "/") then
+            abs = tsc_root .. "/" .. file
+          end
+          abs = vim.fn.fnamemodify(abs, ":p")
           diagnostics[abs] = diagnostics[abs] or {}
           table.insert(diagnostics[abs], {
             lnum = tonumber(lnum) - 1,
@@ -43,7 +49,7 @@ return {
           vim.schedule(function()
             tsc_running = false
 
-            -- Clear all previous workspace diagnostics
+            -- Clear previous workspace diagnostics
             for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
               vim.diagnostic.reset(ns, bufnr)
             end
@@ -65,7 +71,6 @@ return {
       )
     end
 
-    -- Debounced run to avoid hammering tsc on rapid saves
     local function run_tsc_debounced(delay)
       if tsc_timer then
         tsc_timer:stop()
@@ -73,11 +78,11 @@ return {
       tsc_timer = vim.defer_fn(run_tsc, delay or 1000)
     end
 
-    -- On first ts_ls attach, discover root and kick off initial check
+    -- On first vtsls attach, discover root and kick off initial check
     vim.api.nvim_create_autocmd("LspAttach", {
       callback = function(ev)
         local client = vim.lsp.get_client_by_id(ev.data.client_id)
-        if not client or client.name ~= "ts_ls" then
+        if not client or client.name ~= "vtsls" then
           return
         end
         if tsc_root then
