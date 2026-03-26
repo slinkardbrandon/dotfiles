@@ -23,6 +23,8 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "{{colors.warning}}" })
     vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "{{colors.diagErrorBg}}" })
     vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "{{colors.diagWarnBg}}" })
+    vim.api.nvim_set_hl(0, "NeoTreeDiagError", { fg = "{{colors.errorDark}}" })
+    vim.api.nvim_set_hl(0, "NeoTreeDiagWarn", { fg = "{{colors.warning}}" })
   end,
 })
 
@@ -102,25 +104,6 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
   command = "silent! checktime",
 })
 
--- Close buffer
-vim.keymap.set("n", "<leader>x", "<cmd>bd<cr>", { desc = "Close buffer" })
-vim.keymap.set("n", "<leader>w", "<cmd>bd<cr>", { desc = "Close buffer" })
-
--- Reload config
-vim.keymap.set("n", "<leader>R", function()
-  -- Clear cached lua modules so they re-execute
-  for name, _ in pairs(package.loaded) do
-    if name:match("^plugins") or name:match("^options") then
-      package.loaded[name] = nil
-    end
-  end
-  dofile(vim.env.MYVIMRC)
-  vim.notify("Config reloaded", vim.log.levels.INFO)
-end, { desc = "Reload config" })
-
--- Cycle buffers
-vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
-vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { desc = "Previous buffer" })
 
 -- Faster updates
 opt.updatetime = 250
@@ -137,5 +120,16 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     local pos = vim.api.nvim_win_get_cursor(0)
     vim.cmd([[%s/\s\+$//e]])
     vim.api.nvim_win_set_cursor(0, pos)
+  end,
+})
+
+-- Auto-save buffers modified by LSP actions (e.g., code actions, rename)
+vim.api.nvim_create_autocmd("LspNotify", {
+  callback = function(args)
+    if args.data.method == "workspace/applyEdit" then
+      vim.defer_fn(function()
+        vim.cmd("silent! wall")
+      end, 100)
+    end
   end,
 })

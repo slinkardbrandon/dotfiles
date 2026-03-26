@@ -17,6 +17,16 @@ Cross-platform dotfiles for **macOS** and **Ubuntu/WSL**. All changes must work 
 - Config files handle platform differences at runtime (e.g., `uname` checks in fish)
 - Machine-specific overrides go in `*.local.fish` files and `~/.gitconfig.local` (gitignored)
 
+## Template files (source of truth for theming)
+
+The following `.tmpl` files are the source of truth — their generated counterparts are overwritten by the theme engine. Always edit the `.tmpl`, never the output file directly:
+
+- `alacritty/alacritty.toml.tmpl` → `alacritty/alacritty.toml`
+- `lazygit/config.yml.tmpl` → `lazygit/config.yml`
+- `nvim/lua/options.lua.tmpl` → `nvim/lua/options.lua`
+- `nvim/lua/plugins/scrollbar.lua.tmpl` → `nvim/lua/plugins/scrollbar.lua`
+- `tmux/tmux.conf.tmpl` → `tmux/tmux.conf`
+
 ## Key conventions
 
 - Shell scripts should be kept minimal — logic belongs in TypeScript

@@ -19,6 +19,21 @@ map("n", "<C-Right>", "<cmd>vertical resize +2<CR>")
 map("n", "<S-l>", "<cmd>bnext<CR>")
 map("n", "<S-h>", "<cmd>bprev<CR>")
 map("n", "<leader>x", "<cmd>bdelete<CR>", { desc = "Close buffer" })
+map("n", "<leader>w", "<cmd>bdelete<CR>", { desc = "Close buffer" })
+
+map("n", "<leader><Tab>", "<cmd>bnext<CR>", { desc = "Next buffer" })
+map("n", "<leader><S-Tab>", "<cmd>bprevious<CR>", { desc = "Previous buffer" })
+
+-- Reload config
+map("n", "<leader>R", function()
+  for name, _ in pairs(package.loaded) do
+    if name:match("^plugins") or name:match("^options") then
+      package.loaded[name] = nil
+    end
+  end
+  dofile(vim.env.MYVIMRC)
+  vim.notify("Config reloaded", vim.log.levels.INFO)
+end, { desc = "Reload config" })
 
 -- Move lines up/down in visual mode
 map("v", "J", ":m '>+1<CR>gv=gv")
@@ -36,7 +51,7 @@ map("n", "N", "Nzzzv")
 map("x", "<leader>p", [["_dP]], { desc = "Paste without yank" })
 
 -- Quick save
-map("n", "<leader>w", "<cmd>w<CR>", { desc = "Save" })
+map("n", "<leader>s", "<cmd>w<CR>", { desc = "Save" })
 
 -- File explorer
 map("n", "<leader>e", "<cmd>Neotree toggle<CR>", { desc = "File explorer" })
