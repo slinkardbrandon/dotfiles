@@ -40,3 +40,4 @@ map("n", "<leader>w", "<cmd>w<CR>", { desc = "Save" })
 
 -- File explorer
 map("n", "<leader>e", "<cmd>Neotree toggle<CR>", { desc = "File explorer" })
+map("n", "<leader>b", "<cmd>Neotree toggle<CR>", { desc = "File explorer" })
