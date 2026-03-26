@@ -40,8 +40,14 @@ claude/
 .claude/
 fish/functions/anthropic_proxy.fish
 
-# Theme engine
+# Theme engine — generated configs (source of truth is the .tmpl files)
 themes/active.txt
+alacritty/alacritty.toml
+tmux/tmux.conf
+nvim/lua/options.lua
+nvim/lua/plugins/scrollbar.lua
+nvim/lua/theme-active.lua
+lazygit/config.yml
 
 # Bun
 node_modules/

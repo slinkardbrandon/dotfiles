@@ -7,6 +7,7 @@ import { setupSymlinks } from "./src/symlinks";
 import { setupFish } from "./src/fish";
 import { setupKeys } from "./src/keys";
 import { applyMacOSDefaults, configureDock } from "./src/macos";
+import { getActiveTheme, generateConfigs } from "./src/theme";
 
 async function main() {
   const platform = detectPlatform();
@@ -27,6 +28,9 @@ async function main() {
   const doSymlinks = await confirm({ message: "Create config symlinks?", default: true });
   if (doSymlinks) {
     await setupSymlinks();
+    const theme = await getActiveTheme();
+    await generateConfigs(theme);
+    log.success(`Generated configs for ${theme.name} theme`);
   }
 
   // Step 3: Set up Fish shell

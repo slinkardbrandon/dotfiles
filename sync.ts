@@ -5,6 +5,7 @@ import { log, run, runQuiet, DOTFILES_DIR } from "./src/utils";
 import { setupSymlinks } from "./src/symlinks";
 import { commandExists, detectPlatform } from "./src/platform";
 import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
+import { getActiveTheme, generateConfigs } from "./src/theme";
 
 const HOME = process.env.HOME!;
 const SSH_DIR = join(HOME, ".ssh");
@@ -275,6 +276,11 @@ async function sync() {
 
   // Ensure all symlinks are correct
   await setupSymlinks();
+
+  // Regenerate themed configs
+  const theme = await getActiveTheme();
+  await generateConfigs(theme);
+  log.success(`Generated configs for ${theme.name} theme`);
 
   // First-time machine setup
   await ensureSshKeyExists();
