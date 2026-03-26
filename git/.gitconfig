@@ -4,14 +4,6 @@
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 
-# Default identity — set in ~/.gitconfig.local (machine-specific)
-[include]
-	path = ~/.gitconfig.local
-
-# Personal identity for dotfiles repo (overrides default on corporate machines)
-[includeIf "gitdir:~/dotfiles/"]
-	path = ~/.gitconfig.personal
-
 [commit]
 	gpgsign = true
 
@@ -55,6 +47,11 @@
 
 [mergetool "vscode"]
 	cmd = code --wait $MERGED
-[user]
-	email = slinkardbrandon@gmail.com
-	name = Brandon Slinkard
+
+# Machine-specific overrides (identity, signing, etc.) — gitignored
+[include]
+	path = ~/.gitconfig.local
+
+# Personal identity for dotfiles repo (overrides default on corporate machines)
+[includeIf "gitdir:~/dotfiles/"]
+	path = ~/.gitconfig.personal
