@@ -48,6 +48,7 @@ return {
           map("gi", vim.lsp.buf.implementation, "Go to implementation")
           map("K", vim.lsp.buf.hover, "Hover docs")
           map("<leader>ca", vim.lsp.buf.code_action, "Code action")
+          map("<leader>.", vim.lsp.buf.code_action, "Code action")
           map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
           map("<leader>D", vim.lsp.buf.type_definition, "Type definition")
           map("[d", vim.diagnostic.goto_prev, "Previous diagnostic")

@@ -28,9 +28,10 @@ return {
     local map = vim.keymap.set
     local builtin = require("telescope.builtin")
 
-    -- Find files (Cmd+P equivalent)
+    -- Find files
     map("n", "<leader>f", builtin.find_files, { desc = "Find files" })
     map("n", "<leader>p", builtin.find_files, { desc = "Find files" })
+    map("n", "<leader>sf", builtin.find_files, { desc = "Search files" })
     -- Command palette (Cmd+Shift+P equivalent)
     map("n", "<leader>P", builtin.commands, { desc = "Command palette" })
     -- Live grep (search across files)

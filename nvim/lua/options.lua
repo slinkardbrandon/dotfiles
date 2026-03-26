@@ -2,7 +2,7 @@ local opt = vim.opt
 
 -- Line numbers
 opt.number = true
-opt.relativenumber = true
+opt.relativenumber = false
 
 -- Tabs & indentation
 opt.tabstop = 2
@@ -24,6 +24,11 @@ opt.scrolloff = 8
 opt.sidescrolloff = 8
 opt.wrap = false
 
+-- Folding (treesitter-based)
+opt.foldmethod = "expr"
+opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+opt.foldlevelstart = 99
+
 -- Splits
 opt.splitright = true
 opt.splitbelow = true
@@ -34,6 +39,15 @@ opt.clipboard = "unnamedplus"
 -- Undo persistence
 opt.undofile = true
 opt.swapfile = false
+
+-- Auto-reload files changed outside nvim
+opt.autoread = true
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
+  command = "silent! checktime",
+})
+
+-- Close buffer
+vim.keymap.set("n", "<leader>x", "<cmd>bd<cr>", { desc = "Close buffer" })
 
 -- Faster updates
 opt.updatetime = 250
