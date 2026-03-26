@@ -127,6 +127,17 @@ export async function setupSymlinks() {
   log.success("All symlinks created");
   log.info("Fisher plugins will auto-install on first Fish shell launch");
 
+  // Compile custom terminfo for undercurl support in tmux
+  const tiFile = join(DOTFILES_DIR, "tmux", "tmux-256color.ti");
+  if (existsSync(tiFile)) {
+    try {
+      await run(["tic", "-x", tiFile]);
+      log.success("Compiled tmux terminfo (undercurl support)");
+    } catch {
+      log.warning("Could not compile terminfo — run manually: tic -x tmux/tmux-256color.ti");
+    }
+  }
+
   // Rebuild bat theme cache so delta picks up symlinked themes
   if (await commandExists("bat")) {
     try {

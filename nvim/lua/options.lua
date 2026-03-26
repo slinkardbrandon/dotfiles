@@ -1,5 +1,60 @@
 local opt = vim.opt
 
+-- Diagnostics
+vim.diagnostic.config({
+  virtual_text = { spacing = 4, prefix = "●" },
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = " ",
+      [vim.diagnostic.severity.WARN] = " ",
+      [vim.diagnostic.severity.HINT] = " ",
+      [vim.diagnostic.severity.INFO] = " ",
+    },
+  },
+  underline = true,
+  severity_sort = true,
+})
+
+-- Diagnostic highlight overrides (applied after colorscheme)
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineError", { undercurl = true, sp = "#db4b4b" })
+    vim.api.nvim_set_hl(0, "DiagnosticUnderlineWarn", { undercurl = true, sp = "#e0af68" })
+    vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "#2d202a" })
+    vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "#2d2b20" })
+  end,
+})
+
+-- Tinted line backgrounds for diagnostics
+vim.api.nvim_set_hl(0, "DiagnosticLineError", { bg = "#2d202a" })
+vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "#2d2b20" })
+
+vim.api.nvim_create_autocmd("DiagnosticChanged", {
+  callback = function()
+    local ns = vim.api.nvim_create_namespace("diagnostic_lines")
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) then
+        vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
+        local diagnostics = vim.diagnostic.get(buf)
+        for _, d in ipairs(diagnostics) do
+          local hl = nil
+          if d.severity == vim.diagnostic.severity.ERROR then
+            hl = "DiagnosticLineError"
+          elseif d.severity == vim.diagnostic.severity.WARN then
+            hl = "DiagnosticLineWarn"
+          end
+          if hl then
+            pcall(vim.api.nvim_buf_set_extmark, buf, ns, d.lnum, 0, {
+              line_hl_group = hl,
+              priority = 10,
+            })
+          end
+        end
+      end
+    end
+  end,
+})
+
 -- Line numbers
 opt.number = true
 opt.relativenumber = false
@@ -48,6 +103,23 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
 
 -- Close buffer
 vim.keymap.set("n", "<leader>x", "<cmd>bd<cr>", { desc = "Close buffer" })
+vim.keymap.set("n", "<leader>w", "<cmd>bd<cr>", { desc = "Close buffer" })
+
+-- Reload config
+vim.keymap.set("n", "<leader>R", function()
+  -- Clear cached lua modules so they re-execute
+  for name, _ in pairs(package.loaded) do
+    if name:match("^plugins") or name:match("^options") then
+      package.loaded[name] = nil
+    end
+  end
+  dofile(vim.env.MYVIMRC)
+  vim.notify("Config reloaded", vim.log.levels.INFO)
+end, { desc = "Reload config" })
+
+-- Cycle buffers
+vim.keymap.set("n", "<leader><Tab>", "<cmd>bnext<cr>", { desc = "Next buffer" })
+vim.keymap.set("n", "<leader><S-Tab>", "<cmd>bprevious<cr>", { desc = "Previous buffer" })
 
 -- Faster updates
 opt.updatetime = 250

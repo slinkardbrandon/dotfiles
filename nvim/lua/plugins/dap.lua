@@ -174,7 +174,7 @@ return {
   -- JS debug adapter (needs to be built)
   {
     "microsoft/vscode-js-debug",
-    build = "npm install --legacy-peer-deps && npx gulp vsDebugServerBundle && mv dist out",
+    build = "npm install --legacy-peer-deps && npx gulp vsDebugServerBundle && mv dist out && git checkout package-lock.json",
     lazy = true,
   },
 }
