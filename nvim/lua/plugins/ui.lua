@@ -2,6 +2,7 @@ return {
   -- Status line
   {
     "nvim-lualine/lualine.nvim",
+    event = "VeryLazy",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
       require("lualine").setup({
@@ -17,6 +18,7 @@ return {
   -- Buffer line (tabs)
   {
     "akinsho/bufferline.nvim",
+    event = "BufReadPost",
     version = "*",
     dependencies = { "nvim-tree/nvim-web-devicons" },
     config = function()
@@ -44,6 +46,7 @@ return {
   -- Indent guides
   {
     "lukas-reineke/indent-blankline.nvim",
+    event = "BufReadPost",
     main = "ibl",
     config = function()
       require("ibl").setup({

@@ -8,7 +8,12 @@ return {
       pattern = "PersistenceSavePre",
       callback = function()
         for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-          if vim.bo[buf].filetype == "neo-tree" then
+          local ft = vim.bo[buf].filetype
+          local bt = vim.bo[buf].buftype
+          local name = vim.api.nvim_buf_get_name(buf):lower()
+          local is_dap = ft:match("^dap") or name:match("dap") or name:match("%[dap")
+          local is_excluded = ft == "neo-tree" or bt == "terminal" or is_dap
+          if is_excluded then
             vim.api.nvim_buf_delete(buf, { force = true })
           end
         end

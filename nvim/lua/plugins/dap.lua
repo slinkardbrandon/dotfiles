@@ -5,14 +5,45 @@ return {
     dependencies = {
       "rcarriga/nvim-dap-ui",
       "nvim-neotest/nvim-nio",
-      -- JS/TS debugger
-      "mxsdev/nvim-dap-vscode-js",
+    },
+    keys = {
+      { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "Toggle breakpoint" },
+      { "<leader>dc", desc = "Debug continue / launch" },
+      { "<leader>do", function() require("dap").step_over() end, desc = "Debug step over" },
+      { "<leader>di", function() require("dap").step_into() end, desc = "Debug step into" },
+      { "<leader>dO", function() require("dap").step_out() end, desc = "Debug step out" },
+      { "<leader>dt", function() require("dap").terminate() end, desc = "Debug terminate" },
+      { "<leader>du", function() require("dapui").toggle() end, desc = "Debug UI toggle" },
     },
     config = function()
       local dap = require("dap")
       local dapui = require("dapui")
 
+      vim.fn.sign_define("DapBreakpoint", { text = "●", texthl = "DiagnosticError" })
+      vim.fn.sign_define("DapBreakpointCondition", { text = "●", texthl = "DiagnosticWarn" })
+      vim.fn.sign_define("DapStopped", { text = "▶", texthl = "DiagnosticInfo", linehl = "CursorLine" })
+
       dapui.setup()
+
+      -- nvim-dap doesn't support ${lineNumber}, so resolve it before launch
+      local orig_run = dap.run
+      dap.run = function(config, opts)
+        config = vim.deepcopy(config)
+        local function resolve(val)
+          if type(val) == "string" then
+            return val:gsub("%${lineNumber}", tostring(vim.fn.line(".")))
+          elseif type(val) == "table" then
+            local t = {}
+            for k, v in pairs(val) do
+              t[k] = resolve(v)
+            end
+            return t
+          end
+          return val
+        end
+        config = resolve(config)
+        return orig_run(config, opts)
+      end
 
       -- Auto open/close UI
       dap.listeners.after.event_initialized["dapui_config"] = function()
@@ -25,36 +56,88 @@ return {
         dapui.close()
       end
 
-      -- Node/TS debugging via js-debug
-      require("dap-vscode-js").setup({
-        debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
-        adapters = { "pwa-node", "pwa-chrome" },
-      })
+      -- JS/TS adapter via vscode-js-debug
+      local js_debug_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug"
+      local Session = require("dap.session")
 
-      -- Helper: detect test runner (vitest or jest) by checking for config files
-      local function detect_test_runner()
-        if vim.fn.filereadable("vitest.config.ts") == 1
-          or vim.fn.filereadable("vitest.config.js") == 1
-          or vim.fn.filereadable("vitest.config.mts") == 1
-        then
-          return "vitest"
+      -- Handler for js-debug child processes (vitest forks, etc.)
+      local function handle_child_session(parent, request)
+        local body = request.arguments
+        local child_config = body.config or {}
+        local child_port = tonumber(child_config.__jsDebugChildServer)
+        if not child_port then
+          return
         end
-        return "jest"
-      end
 
-      -- Helper: get the test name closest to cursor
-      local function get_nearest_test_name()
-        local line = vim.fn.line(".")
-        for i = line, 1, -1 do
-          local text = vim.fn.getline(i)
-          local match = text:match('["\'](.+)["\']')
-          if match and (text:match("^%s*it%(") or text:match("^%s*test%(") or text:match("^%s*describe%(")) then
-            return match
+        local child_adapter = {
+          type = "server",
+          host = "127.0.0.1",
+          port = child_port,
+          reverse_request_handlers = {
+            attachedChildSession = handle_child_session,
+          },
+        }
+
+        local session
+        session = Session.connect(child_adapter, child_config, {}, function(err)
+          if err then
+            vim.notify("Child debug session failed: " .. err, vim.log.levels.WARN)
+          elseif session then
+            session.parent = parent
+            parent.children[session.id] = session
+            session.on_close["dap.child"] = function(s)
+              if s.parent then
+                s.parent.children[s.id] = nil
+                s.parent = nil
+              end
+            end
+            session:initialize(child_config)
+            parent:response(request, { success = true })
           end
-        end
-        return nil
+        end)
       end
 
+      for _, adapter in ipairs({ "pwa-node", "pwa-chrome" }) do
+        dap.adapters[adapter] = {
+          type = "server",
+          host = "localhost",
+          port = "${port}",
+          executable = {
+            command = "node",
+            args = { js_debug_path .. "/out/src/vsDebugServer.js", "${port}" },
+          },
+          reverse_request_handlers = {
+            attachedChildSession = handle_child_session,
+          },
+        }
+      end
+
+      -- Also register non-pwa types so launch.json "type": "node" works
+      dap.adapters["node"] = function(cb, config)
+        config.type = "pwa-node"
+        local adapter = dap.adapters["pwa-node"]
+        if type(adapter) == "function" then
+          adapter(cb, config)
+        else
+          cb(adapter)
+        end
+      end
+
+      -- Load .vscode/launch.json if present (picks up vitest configs etc.)
+      -- <leader>dc loads launch.json then continues
+      local launch_json_loaded = false
+      vim.keymap.set("n", "<leader>dc", function()
+        if not launch_json_loaded and vim.fn.filereadable(".vscode/launch.json") == 1 then
+          require("dap.ext.vscode").load_launchjs(nil, {
+            ["pwa-node"] = { "javascript", "typescript", "javascriptreact", "typescriptreact" },
+            ["node"] = { "javascript", "typescript", "javascriptreact", "typescriptreact" },
+          })
+          launch_json_loaded = true
+        end
+        dap.continue()
+      end, { desc = "Debug continue / launch" })
+
+      -- Fallback configurations (used when no launch.json)
       for _, language in ipairs({ "typescript", "javascript", "typescriptreact", "javascriptreact" }) do
         dap.configurations[language] = {
           {
@@ -63,63 +146,6 @@ return {
             name = "Launch file",
             program = "${file}",
             cwd = "${workspaceFolder}",
-          },
-          {
-            type = "pwa-node",
-            request = "launch",
-            name = "Debug nearest test",
-            cwd = "${workspaceFolder}",
-            runtimeExecutable = "node",
-            runtimeArgs = function()
-              local runner = detect_test_runner()
-              local test_name = get_nearest_test_name()
-              local file = vim.fn.expand("%:p")
-
-              if runner == "vitest" then
-                local args = {
-                  "./node_modules/vitest/vitest.mjs",
-                  "run",
-                  file,
-                  "--no-file-parallelism",
-                }
-                if test_name then
-                  table.insert(args, "-t")
-                  table.insert(args, test_name)
-                end
-                return args
-              else
-                local args = {
-                  "./node_modules/.bin/jest",
-                  "--runInBand",
-                  "--no-coverage",
-                  file,
-                }
-                if test_name then
-                  table.insert(args, "-t")
-                  table.insert(args, test_name)
-                end
-                return args
-              end
-            end,
-            console = "integratedTerminal",
-          },
-          {
-            type = "pwa-node",
-            request = "launch",
-            name = "Debug test file",
-            cwd = "${workspaceFolder}",
-            runtimeExecutable = "node",
-            runtimeArgs = function()
-              local runner = detect_test_runner()
-              local file = vim.fn.expand("%:p")
-
-              if runner == "vitest" then
-                return { "./node_modules/vitest/vitest.mjs", "run", file, "--no-file-parallelism" }
-              else
-                return { "./node_modules/.bin/jest", "--runInBand", "--no-coverage", file }
-              end
-            end,
-            console = "integratedTerminal",
           },
           {
             type = "pwa-node",
@@ -156,18 +182,6 @@ return {
           program = "${file}",
         },
       }
-
-      -- .vscode/launch.json is read automatically by nvim-dap
-
-      -- Keymaps
-      local map = vim.keymap.set
-      map("n", "<leader>db", dap.toggle_breakpoint, { desc = "Toggle breakpoint" })
-      map("n", "<leader>dc", dap.continue, { desc = "Debug continue" })
-      map("n", "<leader>do", dap.step_over, { desc = "Debug step over" })
-      map("n", "<leader>di", dap.step_into, { desc = "Debug step into" })
-      map("n", "<leader>dO", dap.step_out, { desc = "Debug step out" })
-      map("n", "<leader>dt", dap.terminate, { desc = "Debug terminate" })
-      map("n", "<leader>du", dapui.toggle, { desc = "Debug UI toggle" })
     end,
   },
 

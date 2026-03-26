@@ -1,6 +1,7 @@
 -- Syntax highlighting and code understanding
 return {
   "nvim-treesitter/nvim-treesitter",
+  event = "BufReadPost",
   build = ":TSUpdate",
   config = function()
     -- nvim 0.12+ uses vim.treesitter directly

@@ -51,10 +51,7 @@ bind -r L resize-pane -R 5
 # Toggle terminal popup (like VS Code Ctrl+`)
 bind -n M-` if-shell -F '#{==:#{session_name},popup}' \
   'detach-client' \
-  'display-popup -d "#{pane_current_path}" -w 90% -h 40% -E "tmux new -As popup"'
-bind -n C-@ if-shell -F '#{==:#{session_name},popup}' \
-  'detach-client' \
-  'display-popup -d "#{pane_current_path}" -w 90% -h 40% -E "tmux new -As popup"'
+  'display-popup -d "#{pane_current_path}" -x 0 -y 100% -w 100% -h 65% -E "tmux new -As popup"'
 
 # Pane splits — no prefix needed
 bind -n M-\\ split-window -h -c "#{pane_current_path}"
@@ -127,6 +124,8 @@ bind -n M-r source-file ~/.tmux.conf \; display "Config reloaded"
 # Copy mode with vim keys
 bind Escape copy-mode
 bind -n M-Escape copy-mode
+bind -n M-[ copy-mode
+bind -T copy-mode-vi M-[ send -X cancel
 setw -g mode-keys vi
 bind -T copy-mode-vi v send -X begin-selection
 

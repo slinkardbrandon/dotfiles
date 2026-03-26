@@ -1,6 +1,7 @@
 -- DO NOT EDIT — generated from scrollbar.lua.tmpl by theme engine
 return {
   "petertriho/nvim-scrollbar",
+  event = "BufReadPost",
   dependencies = { "lewis6991/gitsigns.nvim" },
   config = function()
     require("scrollbar").setup({

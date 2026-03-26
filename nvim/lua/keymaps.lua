@@ -53,6 +53,4 @@ map("x", "<leader>p", [["_dP]], { desc = "Paste without yank" })
 -- Quick save
 map("n", "<leader>s", "<cmd>w<CR>", { desc = "Save" })
 
--- File explorer
-map("n", "<leader>e", "<cmd>Neotree toggle<CR>", { desc = "File explorer" })
-map("n", "<leader>b", "<cmd>Neotree toggle<CR>", { desc = "File explorer" })
+-- File explorer keymaps defined in neo-tree.lua (lazy-loaded via keys)

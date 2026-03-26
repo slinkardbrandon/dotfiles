@@ -2,6 +2,7 @@ return {
   -- Git signs in the gutter
   {
     "lewis6991/gitsigns.nvim",
+    event = "BufReadPost",
     config = function()
       require("gitsigns").setup({
         on_attach = function(bufnr)

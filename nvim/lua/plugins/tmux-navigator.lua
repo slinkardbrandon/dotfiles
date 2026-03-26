@@ -13,7 +13,5 @@ return {
     vim.keymap.set("n", "<C-j>", "<cmd>TmuxNavigateDown<cr>", { desc = "Navigate down" })
     vim.keymap.set("n", "<C-k>", "<cmd>TmuxNavigateUp<cr>", { desc = "Navigate up" })
     vim.keymap.set("n", "<C-l>", "<cmd>TmuxNavigateRight<cr>", { desc = "Navigate right" })
-    -- Unmap Ctrl+` (sent as C-@) so tmux can handle the terminal popup toggle
-    vim.keymap.set("n", "<C-@>", "<Nop>")
   end,
 }

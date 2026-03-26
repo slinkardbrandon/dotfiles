@@ -2,6 +2,24 @@
 return {
   "nvim-neo-tree/neo-tree.nvim",
   branch = "v3.x",
+  cmd = "Neotree",
+  keys = {
+    { "<leader>e", "<cmd>Neotree toggle<CR>", desc = "File explorer" },
+    { "<leader>b", "<cmd>Neotree toggle<CR>", desc = "File explorer" },
+  },
+  init = function()
+    local should_open = false
+    if vim.fn.argc() == 0 then
+      should_open = true
+    elseif vim.fn.argc() == 1 and vim.fn.isdirectory(vim.fn.argv(0)) == 1 then
+      should_open = true
+    end
+    if should_open then
+      vim.defer_fn(function()
+        vim.cmd("Neotree show")
+      end, 0)
+    end
+  end,
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-tree/nvim-web-devicons",
