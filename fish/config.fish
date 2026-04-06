@@ -66,3 +66,16 @@ set fish_greeting
 if test -f $HOME/.config/fish/config.local.fish
     source $HOME/.config/fish/config.local.fish
 end
+
+# pnpm
+switch (uname)
+    case Darwin
+        set -gx PNPM_HOME "$HOME/Library/pnpm"
+    case '*'
+        set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+end
+if test -d "$PNPM_HOME"
+    if not string match -q -- $PNPM_HOME $PATH
+        set -gx PATH "$PNPM_HOME" $PATH
+    end
+end

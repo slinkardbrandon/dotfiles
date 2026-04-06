@@ -25,6 +25,9 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     vim.api.nvim_set_hl(0, "DiagnosticLineWarn", { bg = "{{colors.diagWarnBg}}" })
     vim.api.nvim_set_hl(0, "NeoTreeDiagError", { fg = "{{colors.errorDark}}" })
     vim.api.nvim_set_hl(0, "NeoTreeDiagWarn", { fg = "{{colors.warning}}" })
+    -- Spectre search/replace: diff-style red (old) / green (new)
+    vim.api.nvim_set_hl(0, "SpectreSearch", { bg = "{{colors.diffMinusEmph}}", fg = "{{colors.red}}", strikethrough = true })
+    vim.api.nvim_set_hl(0, "SpectreReplace", { bg = "{{colors.diffPlusEmph}}", fg = "{{colors.green}}" })
   end,
 })
 

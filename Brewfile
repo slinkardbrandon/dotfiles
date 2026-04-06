@@ -32,6 +32,7 @@ brew "go"
 # Utilities
 brew "defaultbrowser"
 brew "dockutil"
+brew "pandoc"
 
 # GUI applications
 cask "google-chrome"
