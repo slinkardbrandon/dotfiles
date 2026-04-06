@@ -98,6 +98,14 @@ bind -n M-5 select-window -t 5
 # Pass focus events to applications (needed for nvim autoread + LSP refresh)
 set -g focus-events on
 
+# Switch sessions by index — no prefix needed (M-Shift-1=M-!, M-Shift-2=M-@, etc.)
+bind -n M-! switch-client -t 0
+bind -n M-@ switch-client -t 1
+bind -n M-# switch-client -t 2
+bind -n 'M-$' switch-client -t 3
+bind -n M-% switch-client -t 4
+bind -n M-^ switch-client -t 5
+
 # Reduce escape delay (important for neovim)
 set -sg escape-time 0
 
