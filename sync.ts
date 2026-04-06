@@ -250,6 +250,10 @@ async function ensurePersonalSshAlias() {
       const newRemote = remote.replace("github.com", "github.com-personal");
       await run(["git", "-C", DOTFILES_DIR, "remote", "set-url", "origin", newRemote]);
       log.success(`Updated dotfiles remote: ${newRemote}`);
+    } else if (remote.includes("github-personal") && !remote.includes("github.com-personal")) {
+      const newRemote = remote.replace("github-personal", "github.com-personal");
+      await run(["git", "-C", DOTFILES_DIR, "remote", "set-url", "origin", newRemote]);
+      log.success(`Fixed dotfiles remote to use github.com-personal`);
     }
   } catch {}
 }
