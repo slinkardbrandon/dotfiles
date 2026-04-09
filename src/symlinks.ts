@@ -79,12 +79,6 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".config", "bat", "themes"),
   });
 
-  // Claude Code settings
-  links.push({
-    source: join(DOTFILES_DIR, "claude", "settings.json"),
-    target: join(home, ".claude", "settings.json"),
-  });
-
   return links;
 }
 

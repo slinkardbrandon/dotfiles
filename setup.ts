@@ -1,5 +1,7 @@
 import chalk from "chalk";
 import { confirm } from "@inquirer/prompts";
+import { existsSync, copyFileSync, mkdirSync } from "fs";
+import { join } from "path";
 import { log } from "./src/utils";
 import { detectPlatform, isWSL } from "./src/platform";
 import { installPackages } from "./src/packages";
@@ -8,6 +10,24 @@ import { setupFish } from "./src/fish";
 import { setupKeys } from "./src/keys";
 import { applyMacOSDefaults, configureDock } from "./src/macos";
 import { getActiveTheme, generateConfigs } from "./src/theme";
+
+const DOTFILES_DIR = process.env.HOME ? join(process.env.HOME, "dotfiles") : "";
+
+function setupClaudeCode() {
+  const home = process.env.HOME!;
+  const targetDir = join(home, ".claude");
+  const targetFile = join(targetDir, "settings.json");
+  const templateFile = join(DOTFILES_DIR, "claude", "settings.json");
+
+  if (existsSync(targetFile)) {
+    log.info("Claude Code settings already exist, skipping");
+    return;
+  }
+
+  mkdirSync(targetDir, { recursive: true });
+  copyFileSync(templateFile, targetFile);
+  log.success("Created Claude Code settings from template");
+}
 
 async function main() {
   const platform = detectPlatform();
@@ -32,6 +52,9 @@ async function main() {
     await generateConfigs(theme);
     log.success(`Generated configs for ${theme.name} theme`);
   }
+
+  // Step 2b: Claude Code settings (one-time copy from template)
+  setupClaudeCode();
 
   // Step 3: Set up Fish shell
   const doFish = await confirm({ message: "Set up Fish as default shell?", default: true });
