@@ -159,6 +159,18 @@ function getGitBranch(cwd: string): string | null {
 
 // ── Version check ────────────────────────────────────────────────────────────
 
+function getUpgradeCommand(): string {
+  // Check if claude binary is in a Homebrew path
+  try {
+    const r = Bun.spawnSync(["which", "claude"], { stdout: "pipe" });
+    const path = r.stdout.toString().trim();
+    if (path.includes("/homebrew/") || path.includes("/Cellar/")) {
+      return "brew upgrade claude";
+    }
+  } catch {}
+  return "npm install -g @anthropic-ai/claude-code";
+}
+
 function checkVersion(current: string): string {
   const file = "/tmp/claude-latest-version";
 
@@ -175,7 +187,10 @@ function checkVersion(current: string): string {
 
   try {
     const latest = readFileSync(file, "utf8").trim();
-    if (latest && latest !== current) return ansi.yellow(`(CLI v${current} ✘)`);
+    if (latest && latest !== current) {
+      const cmd = getUpgradeCommand();
+      return ansi.yellow(`(v${current} ✘ → ${latest})`) + ansi.dim(` [${cmd}]`);
+    }
     return ansi.teal(`(CLI v${current} ✓)`);
   } catch {
     return ansi.dim(`(CLI v${current})`);
@@ -308,15 +323,27 @@ function mkBurnLine(
   return `🔥 ${heatColor(tok)(tokStr)} I/O tokens  💧 ${ansi.water(galStr)}`;
 }
 
+// ── Error display ─────────────────────────────────────────────────────────────
+
+function showError(msg: string): void {
+  const inner = msg.length + 2;
+  const h = hrule(inner + 2);
+  console.log(`${DIM}╭${h}╮${R}`);
+  console.log(`${DIM}│${R} ${ansi.red(msg)} ${DIM}│${R}`);
+  console.log(`${DIM}╰${h}╯${R}`);
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 let input: StatusInput;
 try {
   input = await Bun.stdin.json();
 } catch (e) {
-  console.error(`statusline: failed to parse stdin: ${e}`);
+  showError(`stdin parse error: ${e}`);
   process.exit(1);
 }
+
+try {
 
 const dirName = basename(input.cwd);
 const branch = getGitBranch(input.cwd);
@@ -351,7 +378,7 @@ if (input.cost.total_duration_ms != null) {
 
 // -- Line 2 right: rate limits + reset --
 let line2Right = "";
-if (input.rate_limits.five_hour?.used_percentage != null) {
+if (input.rate_limits?.five_hour?.used_percentage != null) {
   const h5Left = 100 - Math.round(input.rate_limits.five_hour.used_percentage);
 
   let resetStr = "";
@@ -459,4 +486,9 @@ if (hasBurn) {
   console.log(`${DIM}├${mh}┤${R}`);
   console.log(mainLines[1]);
   console.log(`${DIM}╰${mh}╯${R}`);
+}
+
+} catch (e) {
+  showError(`statusline error: ${e instanceof Error ? e.message : e}`);
+  process.exit(1);
 }
