@@ -7,8 +7,7 @@
  *
  * Data files (auto-created):
  *   /tmp/claude-latest-version       hourly npm version cache
- *   /tmp/claude-session-baseline     token baseline (resets on /new)
- *   ~/.claude/session-gallons.json   persistent gallon tracking
+ *   ~/.claude/session-gallons.json   persistent gallon tracking (cache-weighted water)
  */
 
 import { statSync, readFileSync } from "fs";
@@ -25,6 +24,12 @@ interface StatusInput {
     used_percentage?: number;
     total_input_tokens?: number;
     total_output_tokens?: number;
+    current_usage?: {
+      input_tokens: number;
+      output_tokens: number;
+      cache_creation_input_tokens: number;
+      cache_read_input_tokens: number;
+    };
   };
   cost: { total_duration_ms?: number };
   rate_limits: {
@@ -33,26 +38,28 @@ interface StatusInput {
   };
 }
 
-interface SessionBaseline {
-  sid: string;
-  base_in: number;
-  base_out: number;
-}
-
 interface GallonEntry {
-  tok_k: number;
-  cents: number;
+  total_in: number;      // API total_input_tokens (for delta detection)
+  total_out: number;     // API total_output_tokens
+  io_k: number;          // total I/O in thousands (for display)
+  compute_in: number;    // accumulated non-cached input tokens
+  cache_create: number;  // accumulated cache creation tokens
+  cache_read: number;    // accumulated cache read tokens
+  output: number;        // accumulated output tokens
   month: string;
 }
 
 interface GallonStore {
+  version?: number;
   sessions: Record<string, GallonEntry>;
   totals: {
     month: string;
-    month_tok: number;
-    month_cents: number;
-    all_tok: number;
-    all_cents: number;
+    month_io: number;     // total I/O in K (manager metric)
+    month_api: number;    // actual API throughput in K (matches /stats)
+    month_water: number;  // water gallon-cents (cache-weighted)
+    all_io: number;
+    all_api: number;
+    all_water: number;
   };
 }
 
@@ -197,39 +204,52 @@ function checkVersion(current: string): string {
   }
 }
 
-// ── Session baseline (resets on /new) ────────────────────────────────────────
+// ── Transcript scanning (one-time migration) ────────────────────────────────
 
-const BASELINE_FILE = "/tmp/claude-session-baseline";
+interface TranscriptTotals {
+  compute_in: number;
+  cache_create: number;
+  cache_read: number;
+  output: number;
+}
 
-function getSessionTokens(
-  sessionId: string,
-  rawIn: number,
-  rawOut: number,
-): { sessionIn: number; sessionOut: number } {
-  let baseIn = 0;
-  let baseOut = 0;
+function scanTranscripts(curMonth: string): { all: TranscriptTotals; month: TranscriptTotals } {
+  const all: TranscriptTotals = { compute_in: 0, cache_create: 0, cache_read: 0, output: 0 };
+  const month: TranscriptTotals = { compute_in: 0, cache_create: 0, cache_read: 0, output: 0 };
+  const dir = join(process.env.HOME!, ".claude", "projects");
 
   try {
-    const data: SessionBaseline = JSON.parse(readFileSync(BASELINE_FILE, "utf8"));
-    if (data.sid === sessionId) {
-      baseIn = data.base_in;
-      baseOut = data.base_out;
-    } else {
-      throw "new session";
-    }
-  } catch {
-    baseIn = rawIn;
-    baseOut = rawOut;
-    Bun.write(
-      BASELINE_FILE,
-      JSON.stringify({ sid: sessionId, base_in: baseIn, base_out: baseOut }),
-    );
-  }
+    const r = Bun.spawnSync(["find", dir, "-name", "*.jsonl", "-type", "f"], { stdout: "pipe" });
+    const files = r.stdout.toString().trim().split("\n").filter(Boolean);
 
-  return {
-    sessionIn: Math.max(0, rawIn - baseIn),
-    sessionOut: Math.max(0, rawOut - baseOut),
-  };
+    for (const file of files) {
+      try {
+        const fileMonth = new Date(statSync(file).mtimeMs).toISOString().slice(0, 7);
+        const target = fileMonth === curMonth ? month : null;
+        const lines = readFileSync(file, "utf8").split("\n");
+
+        for (const line of lines) {
+          if (!line.includes('"usage"')) continue;
+          try {
+            const usage = JSON.parse(line)?.message?.usage;
+            if (!usage) continue;
+            const inp = usage.input_tokens ?? 0;
+            const out = usage.output_tokens ?? 0;
+            const cc = usage.cache_creation_input_tokens ?? 0;
+            const cr = usage.cache_read_input_tokens ?? 0;
+            all.compute_in += inp; all.cache_create += cc;
+            all.cache_read += cr;  all.output += out;
+            if (target) {
+              target.compute_in += inp; target.cache_create += cc;
+              target.cache_read += cr;  target.output += out;
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+  } catch {}
+
+  return { all, month };
 }
 
 // ── Gallon tracking ──────────────────────────────────────────────────────────
@@ -237,90 +257,154 @@ function getSessionTokens(
 const GALLONS_FILE = join(process.env.HOME!, ".claude", "session-gallons.json");
 
 /**
- * Convert token count (in thousands) to gallon-cents (100 = 1 gallon).
+ * Cache-aware water consumption estimate (returns gallon-cents, 100 = 1 gallon).
  *
- * Based on inference-only water consumption estimates of ~0.5–1ml per 1k tokens
- * for data center cooling. We use 0.75ml/1k as a midpoint.
+ * Based on inference-only estimates of ~0.75ml per 1k tokens for full GPU
+ * compute (Li et al. 2023, https://arxiv.org/abs/2304.03271 — adjusted for
+ * modern inference-only workloads, excluding training amortization).
  *
- * The commonly cited "500ml per query" figure (Li et al. 2023,
- * https://arxiv.org/abs/2304.03271) includes training cost amortization
- * and was benchmarked against GPT-3/4 infrastructure — not representative
- * of modern inference-only workloads.
+ * Cache reads are memory lookups, not full inference — ~10% of the compute
+ * (and cooling water) of processing tokens through all transformer layers.
+ * This aligns with Anthropic's ~90% billing discount on cache reads.
  *
- * Math: 0.75ml per 1k tokens → gallons = tokK * 0.75 / 3785.41
- * In integer gallon-cents: tokK * 75 / 3785, scaled to avoid FP.
+ * Math: effective_tokens * 0.75ml / 3785.41ml per gallon, scaled to cents.
  */
-function tokToGalCents(tokK: number): number {
-  // 0.75ml = 0.75/3785.41 gal per 1k tokens
-  // In cents: (tokK * 0.75 * 100) / 3785.41 ≈ tokK * 75 / 3785
-  return Math.round((tokK * 75) / 3785);
+const CACHE_READ_WEIGHT = 0.1;
+
+function computeWaterCents(b: {
+  compute_in: number;
+  cache_create: number;
+  cache_read: number;
+  output: number;
+}): number {
+  const effectiveK =
+    (b.compute_in + b.cache_create + b.cache_read * CACHE_READ_WEIGHT + b.output) / 1000;
+  return Math.round((effectiveK * 75) / 3785);
 }
 
 function updateGallons(
   sessionId: string,
-  sessTok: number,
-  sessCents: number,
-): { monthTok: number; monthCents: number; allTok: number; allCents: number } {
-  const curMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+  totalIn: number,
+  totalOut: number,
+  currentUsage?: StatusInput["context_window"]["current_usage"],
+): {
+  sessApiK: number; sessWater: number;
+  monthApiK: number; monthWater: number;
+  allApiK: number; allWater: number;
+} {
+  const curMonth = new Date().toISOString().slice(0, 7);
+
+  const STORE_VERSION = 5;
 
   let store: GallonStore;
   try {
     store = JSON.parse(readFileSync(GALLONS_FILE, "utf8"));
     if (!store.sessions || !store.totals) throw "malformed";
+
+    if ((store.version ?? 0) < STORE_VERSION) {
+      // v5: scan all session transcripts for accurate historical data
+      // Replaces all previous estimation/migration logic
+      const hist = scanTranscripts(curMonth);
+
+      const toApiK = (t: TranscriptTotals) =>
+        Math.floor((t.compute_in + t.cache_create + t.cache_read + t.output) / 1000);
+
+      store.totals = {
+        month: curMonth,
+        month_io: 0,
+        month_api: toApiK(hist.month),
+        month_water: computeWaterCents(hist.month),
+        all_io: 0,
+        all_api: toApiK(hist.all),
+        all_water: computeWaterCents(hist.all),
+      };
+      store.sessions = {};
+      store.version = STORE_VERSION;
+    }
   } catch {
     store = {
+      version: STORE_VERSION,
       sessions: {},
-      totals: { month: curMonth, month_tok: 0, month_cents: 0, all_tok: 0, all_cents: 0 },
+      totals: { month: curMonth, month_io: 0, month_api: 0, month_water: 0, all_io: 0, all_api: 0, all_water: 0 },
     };
   }
 
-  // Compute delta from previous value for this session
+  // Previous session state (or defaults for new session)
   const prev = store.sessions[sessionId];
-  const prevTok = prev?.tok_k ?? 0;
-  const prevCents = prev?.cents ?? 0;
-  const dTok = sessTok - prevTok;
-  const dCents = sessCents - prevCents;
+  let computeIn = prev?.compute_in ?? 0;
+  let cacheCreate = prev?.cache_create ?? 0;
+  let cacheRead = prev?.cache_read ?? 0;
+  let output = prev?.output ?? 0;
 
-  // Keep only current session (others already baked into totals)
-  store.sessions = { [sessionId]: { tok_k: sessTok, cents: sessCents, month: curMonth } };
-
-  // Reset month totals on month rollover
-  if (store.totals.month !== curMonth) {
-    store.totals.month = curMonth;
-    store.totals.month_tok = 0;
-    store.totals.month_cents = 0;
+  // Accumulate current_usage when a new turn is detected
+  const prevTotal = (prev?.total_in ?? 0) + (prev?.total_out ?? 0);
+  const currTotal = totalIn + totalOut;
+  if (currTotal !== prevTotal && currentUsage) {
+    computeIn += currentUsage.input_tokens;
+    cacheCreate += currentUsage.cache_creation_input_tokens;
+    cacheRead += currentUsage.cache_read_input_tokens;
+    output += currentUsage.output_tokens;
   }
 
-  // Apply delta to totals
-  store.totals.all_tok += dTok;
-  store.totals.all_cents += dCents;
-  store.totals.month_tok += dTok;
-  store.totals.month_cents += dCents;
+  // Session values
+  const sessApiK = Math.floor((computeIn + cacheCreate + cacheRead + output) / 1000);
+  const sessBreakdown = { compute_in: computeIn, cache_create: cacheCreate, cache_read: cacheRead, output };
+  const sessWater = computeWaterCents(sessBreakdown);
 
-  // Atomic write
+  // Deltas vs previous snapshot
+  const prevApiK = prev
+    ? Math.floor((prev.compute_in + prev.cache_create + prev.cache_read + prev.output) / 1000)
+    : 0;
+  const prevWater = prev
+    ? computeWaterCents({ compute_in: prev.compute_in, cache_create: prev.cache_create, cache_read: prev.cache_read, output: prev.output })
+    : 0;
+
+  // Keep only current session (others already baked into totals)
+  store.sessions = {
+    [sessionId]: {
+      total_in: totalIn, total_out: totalOut, io_k: 0,
+      ...sessBreakdown, month: curMonth,
+    },
+  };
+
+  // Month rollover
+  if (store.totals.month !== curMonth) {
+    store.totals.month = curMonth;
+    store.totals.month_io = 0;
+    store.totals.month_api = 0;
+    store.totals.month_water = 0;
+  }
+
+  // Apply deltas
+  const dApi = sessApiK - prevApiK;
+  const dWater = sessWater - prevWater;
+  store.totals.month_api += dApi;
+  store.totals.month_water += dWater;
+  store.totals.all_api += dApi;
+  store.totals.all_water += dWater;
+
   Bun.write(GALLONS_FILE, JSON.stringify(store));
 
   return {
-    monthTok: store.totals.month_tok,
-    monthCents: store.totals.month_cents,
-    allTok: store.totals.all_tok,
-    allCents: store.totals.all_cents,
+    sessApiK, sessWater,
+    monthApiK: store.totals.month_api, monthWater: store.totals.month_water,
+    allApiK: store.totals.all_api, allWater: store.totals.all_water,
   };
 }
 
 // ── Build burn line (column-aligned) ─────────────────────────────────────────
 
 function mkBurnLine(
-  tok: number,
+  api: number,
   cents: number,
-  tokColW: number,
+  apiColW: number,
   galColW: number,
 ): string {
-  tok = Math.max(0, tok);
+  api = Math.max(0, api);
   cents = Math.max(0, cents);
-  const tokStr = fmtTok(tok).padStart(tokColW);
+  const apiStr = fmtTok(api).padStart(apiColW);
   const galStr = fmtGal(cents).padStart(galColW);
-  return `🔥 ${heatColor(tok)(tokStr)} I/O tokens  💧 ${ansi.water(galStr)}`;
+  return `⚡ ${heatColor(api)(apiStr)} tokens  💧 ${ansi.water(galStr)}`;
 }
 
 // ── Error display ─────────────────────────────────────────────────────────────
@@ -401,29 +485,17 @@ if (input.rate_limits?.five_hour?.used_percentage != null) {
   }
 }
 
-// -- Session tokens --
-let sessionIn = 0;
-let sessionOut = 0;
+// -- Burn data (API totals directly — no baseline file needed) --
 const rawIn = input.context_window.total_input_tokens ?? 0;
 const rawOut = input.context_window.total_output_tokens ?? 0;
-
-if (rawIn > 0 && rawOut > 0 && input.session_id) {
-  ({ sessionIn, sessionOut } = getSessionTokens(input.session_id, rawIn, rawOut));
-}
-
-// -- Burn data --
 const hasBurn = rawIn > 0 || rawOut > 0;
-let sessTok = 0, sessCents = 0;
-let monthTok = 0, monthCents = 0, allTok = 0, allCents = 0;
+let sessApiK = 0, sessWater = 0;
+let monthApiK = 0, monthWater = 0;
+let allApiK = 0, allWater = 0;
 
-if (hasBurn) {
-  sessTok = Math.floor((sessionIn + sessionOut) / 1000);
-  sessCents = tokToGalCents(sessTok);
-
-  if (input.session_id) {
-    ({ monthTok, monthCents, allTok, allCents } =
-      updateGallons(input.session_id, sessTok, sessCents));
-  }
+if (hasBurn && input.session_id) {
+  ({ sessApiK, sessWater, monthApiK, monthWater, allApiK, allWater } =
+    updateGallons(input.session_id, rawIn, rawOut, input.context_window.current_usage));
 }
 
 // -- Compute main table inner width --
@@ -439,12 +511,12 @@ const mainLines = [
 
 if (hasBurn) {
   // Column widths for alignment (measure formatted strings, not raw numbers)
-  const tokColW = Math.max(...[sessTok, monthTok, allTok].map((n) => fmtTok(Math.max(0, n)).length));
-  const galColW = Math.max(...[sessCents, monthCents, allCents].map((n) => fmtGal(Math.max(0, n)).length));
+  const apiColW = Math.max(...[sessApiK, monthApiK, allApiK].map((n) => fmtTok(Math.max(0, n)).length));
+  const galColW = Math.max(...[sessWater, monthWater, allWater].map((n) => fmtGal(Math.max(0, n)).length));
 
-  const bcSess = mkBurnLine(sessTok, sessCents, tokColW, galColW);
-  const bcMonth = mkBurnLine(monthTok, monthCents, tokColW, galColW);
-  const bcAll = mkBurnLine(allTok, allCents, tokColW, galColW);
+  const bcSess = mkBurnLine(sessApiK, sessWater, apiColW, galColW);
+  const bcMonth = mkBurnLine(monthApiK, monthWater, apiColW, galColW);
+  const bcAll = mkBurnLine(allApiK, allWater, apiColW, galColW);
 
   const blSess = ansi.dim("this session");
   const blMonth = ansi.dim("this month");
