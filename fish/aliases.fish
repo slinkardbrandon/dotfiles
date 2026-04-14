@@ -80,6 +80,9 @@ alias p='pnpm'
 # Lazygit
 alias lg='lazygit'
 
+# Copilot CLI: skip all permission prompts
+alias copilot='command copilot --yolo'
+
 # Source machine-local aliases (not tracked in git)
 if test -f $HOME/.config/fish/aliases.local.fish
     source $HOME/.config/fish/aliases.local.fish
