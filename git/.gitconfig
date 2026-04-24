@@ -6,6 +6,7 @@
 
 [commit]
 	gpgsign = true
+	template = ~/.gitmessage
 
 [push]
 	autoSetupRemote = true
