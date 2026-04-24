@@ -96,8 +96,10 @@ function jlog --description "Run command and prettify JSON log output"
                  fmt_http +
                  (if .err or .error then
                     "\n       " + color("31") + (.err // .error | tostring) + reset
-                  else ""
-                  end))
+                  else "" end) +
+                 (if .errors then
+                    "\n       " + color("31") + (.errors | tostring) + reset
+                  else "" end))
             ' 2>/dev/null)
 
             if test $status -eq 0 -a -n "$formatted"
