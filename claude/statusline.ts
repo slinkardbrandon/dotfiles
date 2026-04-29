@@ -167,10 +167,15 @@ function getGitBranch(cwd: string): string | null {
 // ── Version check ────────────────────────────────────────────────────────────
 
 function getUpgradeCommand(): string {
-  // Check if claude binary is in a Homebrew path
   try {
     const r = Bun.spawnSync(["which", "claude"], { stdout: "pipe" });
     const path = r.stdout.toString().trim();
+    // Resolve symlink to detect standalone installer
+    const resolved = Bun.spawnSync(["readlink", path], { stdout: "pipe" })
+      .stdout.toString().trim() || path;
+    if (resolved.includes(".local/share/claude/versions")) {
+      return "curl -fsSL https://claude.ai/install.sh | sh";
+    }
     if (path.includes("/homebrew/") || path.includes("/Cellar/")) {
       return "brew upgrade claude";
     }
