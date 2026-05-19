@@ -32,6 +32,9 @@ unbind %
 bind c new-window -c "#{pane_current_path}"
 bind t new-window -c "#{pane_current_path}"
 
+# When a session is destroyed, switch to another instead of detaching
+set -g detach-on-destroy off
+
 # Kill pane without confirmation
 bind x kill-pane
 bind -n M-x kill-pane
@@ -40,8 +43,9 @@ bind -n M-x kill-pane
 bind X run-shell 'S=$(tmux display-message -p "#S"); tmux switch-client -n; tmux kill-session -t "$S"'
 bind -n M-X run-shell 'S=$(tmux display-message -p "#S"); tmux switch-client -n; tmux kill-session -t "$S"'
 
-# Session picker
+# Session picker / new session
 bind -n M-s choose-session
+bind -n M-S new-session -c "#{pane_current_path}"
 
 # Vim-style pane navigation
 bind h select-pane -L
