@@ -43,6 +43,7 @@ cask "localsend"
 cask "1password"
 cask "visual-studio-code"
 cask "obsidian"
+cask "bruno"
 
 # Go packages
 go "golang.org/x/tools/gopls"
