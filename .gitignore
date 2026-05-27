@@ -36,7 +36,11 @@ Thumbs.db
 # Machine-local configs
 *.local.yaml
 anthropic-proxy.json
-claude/
+claude/*
+!claude/CLAUDE.md
+!claude/settings.json
+!claude/statusline.ts
+!claude/sync-usage.ts
 .claude/
 fish/functions/anthropic_proxy.fish
 
