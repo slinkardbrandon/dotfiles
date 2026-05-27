@@ -11,7 +11,9 @@
       "Write(*)",
       "Glob(*)",
       "Grep(*)",
-      "WebFetch(*)"
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__*"
     ]
   },
   "statusLine": {
