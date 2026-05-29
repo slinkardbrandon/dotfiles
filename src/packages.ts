@@ -104,10 +104,16 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
     await run([
       "bash",
       "-c",
-      `sudo apt-add-repository -y ppa:fish-shell/release-3 && \
+      `sudo apt install -y fish || ( \
+       sudo apt-add-repository -y ppa:fish-shell/release-4 && \
        sudo apt update && \
-       sudo apt install -y fish`,
+       sudo apt install -y fish )`,
     ]);
+  },
+  claude: async () => {
+    if (await commandExists("claude")) return;
+    log.info("Installing Claude Code CLI...");
+    await run(["bash", "-c", "curl -fsSL https://claude.ai/install.sh | bash"]);
   },
 };
 
