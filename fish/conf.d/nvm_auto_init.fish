@@ -2,7 +2,16 @@
 if status is-interactive
     # Activate the highest installed Node version as the default
     set -l nvm_dir (set -q nvm_data && echo $nvm_data || echo ~/.local/share/nvm)
-    set -l latest_ver (ls -d $nvm_dir/v* 2>/dev/null | sort -V | tail -1 | string replace -r '.*/v' '')
+    # Collect installed versions via a for loop — an unmatched glob here is a
+    # no-op (zero iterations) rather than a fatal "No matches for wildcard" error.
+    set -l vers
+    for dir in $nvm_dir/v*
+        set -a vers (string replace -r '.*/v' '' -- $dir)
+    end
+    set -l latest_ver
+    if set -q vers[1]
+        set latest_ver (printf '%s\n' $vers | sort -V | tail -1)
+    end
     if test -n "$latest_ver"
         nvm use --silent $latest_ver
     end
