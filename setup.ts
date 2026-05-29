@@ -8,6 +8,7 @@ import { installPackages } from "./src/packages";
 import { setupSymlinks } from "./src/symlinks";
 import { setupFish } from "./src/fish";
 import { setupKeys } from "./src/keys";
+import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
 import { applyMacOSDefaults, configureDock } from "./src/macos";
 import { getActiveTheme, generateConfigs } from "./src/theme";
 
@@ -68,7 +69,12 @@ async function main() {
     await setupKeys(platform);
   }
 
-  // Step 5: macOS-specific
+  // Step 5: Git identity (machine-specific name/email). Runs after keys so it
+  // picks up any signing key just generated; no-ops if identity already set.
+  await ensureGitconfigLocal();
+  await ensureGitconfigPersonal();
+
+  // Step 6: macOS-specific
   if (platform === "macos") {
     const doDefaults = await confirm({ message: "Apply macOS defaults?", default: true });
     if (doDefaults) {

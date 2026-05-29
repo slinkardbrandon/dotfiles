@@ -6,60 +6,10 @@ import { setupSymlinks } from "./src/symlinks";
 import { commandExists, detectPlatform } from "./src/platform";
 import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
 import { getActiveTheme, generateConfigs } from "./src/theme";
+import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
 
 const HOME = process.env.HOME!;
 const SSH_DIR = join(HOME, ".ssh");
-
-interface GpgKey {
-  id: string;
-  uid: string;
-}
-
-async function detectGpgKeys(): Promise<GpgKey[]> {
-  const keys: GpgKey[] = [];
-  try {
-    const raw = await runQuiet(["gpg", "--list-secret-keys", "--keyid-format=long"]);
-    const lines = raw.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const secMatch = lines[i].match(/sec\s+\w+\/(\w+)/);
-      if (secMatch) {
-        const uid = lines.slice(i + 1, i + 4).find((l) => l.includes("uid"))?.replace(/.*\]\s*/, "").trim() || "unknown";
-        keys.push({ id: secMatch[1], uid });
-      }
-    }
-  } catch {}
-  return keys;
-}
-
-async function getGpgProgram(): Promise<string> {
-  try {
-    return await runQuiet(["which", "gpg"]);
-  } catch {
-    return "/usr/bin/gpg";
-  }
-}
-
-async function selectGpgKey(keys: GpgKey[], prompt: string): Promise<string | null> {
-  if (keys.length === 0) return null;
-  if (keys.length === 1) {
-    log.info(`Found GPG key: ${keys[0].uid} (${keys[0].id})`);
-    return keys[0].id;
-  }
-  return await select({
-    message: prompt,
-    choices: keys.map((k) => ({ name: `${k.uid} (${k.id})`, value: k.id })),
-  });
-}
-
-function writeGitIdentity(path: string, name: string, email: string, signingKey: string | null, gpgProgram: string): Promise<number> {
-  let content = `[user]\n\tname = ${name}\n\temail = ${email}\n`;
-  if (signingKey) {
-    content += `\tsigningkey = ${signingKey}\n\n[gpg]\n\tprogram = ${gpgProgram}\n`;
-  } else {
-    content += `\n[commit]\n\tgpgsign = false\n`;
-  }
-  return Bun.write(path, content);
-}
 
 async function ensureSshKeyExists() {
   const ed25519 = join(SSH_DIR, "id_ed25519");
@@ -127,40 +77,6 @@ async function ensureSshKeyExists() {
       }
     }
   }
-}
-
-async function ensureGitconfigLocal() {
-  const localConfig = `${HOME}/.gitconfig.local`;
-  if (existsSync(localConfig)) return;
-
-  log.step("Setting up ~/.gitconfig.local (default git identity)");
-
-  const name = await input({ message: "Git name (for commits):", default: "Brandon Slinkard" });
-  const email = await input({ message: "Git email (for commits):" });
-
-  const keys = await detectGpgKeys();
-  const gpgProgram = await getGpgProgram();
-  const selectedKey = await selectGpgKey(keys, "Which GPG key for default commits?");
-
-  await writeGitIdentity(localConfig, name, email, selectedKey, gpgProgram);
-  log.success(`Created ~/.gitconfig.local (${email})`);
-}
-
-async function ensureGitconfigPersonal() {
-  const personalConfig = `${HOME}/.gitconfig.personal`;
-  if (existsSync(personalConfig)) return;
-
-  log.step("Setting up ~/.gitconfig.personal (for dotfiles repo)");
-
-  const name = await input({ message: "Personal git name:", default: "Brandon Slinkard" });
-  const email = await input({ message: "Personal git email:", default: "slinkardbrandon@gmail.com" });
-
-  const keys = await detectGpgKeys();
-  const gpgProgram = await getGpgProgram();
-  const selectedKey = await selectGpgKey(keys, "Which GPG key for personal commits?");
-
-  await writeGitIdentity(personalConfig, name, email, selectedKey, gpgProgram);
-  log.success(`Created ~/.gitconfig.personal (${email})`);
 }
 
 async function ensurePersonalSshAlias() {
