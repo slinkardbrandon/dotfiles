@@ -25,6 +25,7 @@ export const LINUX_APT_PACKAGES = [
   "go",
   "tmux",
   "make",
+  "build-essential",
 ];
 
 // Packages that need special installation on Linux (not in default apt repos)
