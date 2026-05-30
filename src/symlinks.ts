@@ -79,6 +79,14 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".config", "bat", "themes"),
   });
 
+  // Claude Code global instructions (base tone; project/company CLAUDE.md
+  // layers on top via Claude's folder hierarchy). settings.json stays a
+  // one-time copy in setup.ts since it varies per machine.
+  links.push({
+    source: join(DOTFILES_DIR, "claude", "CLAUDE.md"),
+    target: join(home, ".claude", "CLAUDE.md"),
+  });
+
   return links;
 }
 
