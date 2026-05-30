@@ -174,7 +174,7 @@ function getUpgradeCommand(): string {
     const resolved = Bun.spawnSync(["readlink", path], { stdout: "pipe" })
       .stdout.toString().trim() || path;
     if (resolved.includes(".local/share/claude/versions")) {
-      return "curl -fsSL https://claude.ai/install.sh | sh";
+      return "curl -fsSL https://claude.ai/install.sh | bash";
     }
     if (path.includes("/homebrew/") || path.includes("/Cellar/")) {
       return "brew upgrade claude";
