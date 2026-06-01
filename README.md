@@ -15,6 +15,8 @@ bash ~/dotfiles/bootstrap.sh
 
 The setup is interactive — it prompts for each step (packages, symlinks, shell, keys).
 
+> **WSL first boot:** On a fresh Windows machine, open WSL via the **Ubuntu** app (not Alacritty) and run setup first. Setup writes the Windows Alacritty launcher + theme config into `%APPDATA%\alacritty\`, which doesn't exist until then — so open Alacritty only *after* setup completes.
+
 ## What's Included
 
 ### Shell & Terminal

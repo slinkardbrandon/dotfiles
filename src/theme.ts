@@ -1,7 +1,8 @@
 import chalk from "chalk";
-import { readdir } from "node:fs/promises";
+import { readdir, mkdir, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { log, runQuiet, DOTFILES_DIR } from "./utils";
+import { isWSL } from "./platform";
 
 interface ThemeDef {
   name: string;
@@ -31,6 +32,18 @@ const TEMPLATES: TemplateEntry[] = [
   {
     template: "alacritty/alacritty.toml.tmpl",
     output: "alacritty/alacritty.toml",
+  },
+  {
+    template: "alacritty/colors.toml.tmpl",
+    output: "alacritty/colors.toml",
+  },
+  {
+    template: "alacritty/common.toml.tmpl",
+    output: "alacritty/common.toml",
+  },
+  {
+    template: "alacritty/windows.toml.tmpl",
+    output: "alacritty/windows.toml",
   },
   {
     template: "tmux/tmux.conf.tmpl",
@@ -117,6 +130,49 @@ return {
 }
 `;
   await Bun.write(join(DOTFILES_DIR, "nvim/lua/theme-active.lua"), nvimTheme);
+
+  // On WSL, mirror the rendered Alacritty fragments into the Windows host's
+  // %APPDATA% so the Windows GUI Alacritty re-themes on every theme switch.
+  if (isWSL()) {
+    await mirrorToWindows();
+  }
+}
+
+/** Resolve the Windows %APPDATA%\alacritty dir from inside WSL. */
+async function resolveWindowsAlacrittyDir(): Promise<string> {
+  const appData = (await runQuiet(["cmd.exe", "/c", "echo %APPDATA%"]))
+    .replace(/\r/g, "")
+    .trim();
+  const unixPath = await runQuiet(["wslpath", "-u", appData]);
+  return join(unixPath, "alacritty");
+}
+
+/**
+ * Copy the rendered Alacritty fragments to the Windows host. Best-effort:
+ * if WSL interop is off (cmd.exe/wslpath unavailable), warn and skip —
+ * never break a theme switch or sync over the Windows mirror.
+ */
+async function mirrorToWindows(): Promise<void> {
+  try {
+    const winDir = await resolveWindowsAlacrittyDir();
+    await mkdir(winDir, { recursive: true });
+
+    const alacrittyDir = join(DOTFILES_DIR, "alacritty");
+    const copies: [string, string][] = [
+      ["windows.toml", "alacritty.toml"],
+      ["common.toml", "common.toml"],
+      ["colors.toml", "colors.toml"],
+    ];
+    for (const [src, dest] of copies) {
+      await copyFile(join(alacrittyDir, src), join(winDir, dest));
+    }
+
+    log.success(`Mirrored Alacritty config to ${winDir}`);
+  } catch (err) {
+    log.warning(
+      `Skipped Windows Alacritty mirror (WSL interop unavailable): ${err}`,
+    );
+  }
 }
 
 export async function reloadRunningApps(): Promise<void> {

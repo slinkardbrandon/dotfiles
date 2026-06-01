@@ -47,6 +47,9 @@ fish/functions/anthropic_proxy.fish
 # Theme engine — generated configs (source of truth is the .tmpl files)
 themes/active.txt
 alacritty/alacritty.toml
+alacritty/colors.toml
+alacritty/common.toml
+alacritty/windows.toml
 tmux/tmux.conf
 nvim/lua/options.lua
 nvim/lua/plugins/scrollbar.lua

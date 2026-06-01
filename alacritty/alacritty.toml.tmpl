@@ -1,68 +1,7 @@
-# DO NOT EDIT — generated from alacritty.toml.tmpl by theme engine
-# Alacritty Configuration
+[general]
+import = ["~/dotfiles/alacritty/common.toml", "~/dotfiles/alacritty/colors.toml"]
 
-# Window settings
 [window]
 option_as_alt = "Both"
 opacity = 0.95
 blur = true
-
-# Font settings
-[font]
-size = 18.0
-normal = { family = "FiraCode Nerd Font Mono", style = "Regular" }
-bold = { family = "FiraCode Nerd Font Mono", style = "Bold" }
-italic = { family = "FiraCode Nerd Font Mono", style = "Italic" }
-bold_italic = { family = "FiraCode Nerd Font Mono", style = "Bold Italic" }
-
-# Theme colors
-[colors]
-draw_bold_text_with_bright_colors = true
-
-[colors.primary]
-background = '{{colors.bg}}'
-foreground = '{{colors.fg}}'
-
-[colors.cursor]
-text = '{{colors.bg}}'
-cursor = '{{colors.fg}}'
-
-[colors.vi_mode_cursor]
-text = '{{colors.bg}}'
-cursor = '{{colors.fg}}'
-
-[colors.selection]
-text = '{{colors.fg}}'
-background = '{{colors.selection}}'
-
-[colors.search.matches]
-foreground = '{{colors.bg}}'
-background = '{{colors.accent}}'
-
-[colors.footer_bar]
-background = '{{colors.selection}}'
-foreground = '{{colors.fg}}'
-
-[colors.hints.start]
-foreground = '{{colors.bg}}'
-background = '{{colors.accent}}'
-
-[colors.hints.end]
-foreground = '{{colors.accent}}'
-background = '{{colors.selection}}'
-
-[[keyboard.bindings]]
-key = "Return"
-mods = "Shift"
-chars = "\u001B\r"
-
-# Cmd+` and Ctrl+` send Meta+` for tmux popup toggle
-[[keyboard.bindings]]
-key = "`"
-mods = "Super"
-chars = "\u001B`"
-
-[[keyboard.bindings]]
-key = "`"
-mods = "Control"
-chars = "\u001B`"
