@@ -116,6 +116,17 @@ function fmtElapsed(ms: number): string {
   return `${sec}s`;
 }
 
+function isNewer(a: string, b: string): boolean {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] ?? 0, vb = pb[i] ?? 0;
+    if (va > vb) return true;
+    if (va < vb) return false;
+  }
+  return false;
+}
+
 function heatColor(tokK: number): (s: string) => string {
   if (tokK >= 200) return ansi.boldRed;
   if (tokK >= 100) return ansi.lightRed;
@@ -194,12 +205,12 @@ function checkVersion(current: string): string {
   } catch {}
 
   if (needsRefresh) {
-    Bun.spawn(["sh", "-c", `npm view @anthropic-ai/claude-code version --json 2>/dev/null | tr -d '"' > "${file}"`]);
+    Bun.spawn(["sh", "-c", `npm view @anthropic-ai/claude-code version --json --registry https://registry.npmjs.org 2>/dev/null | tr -d '"' > "${file}"`]);
   }
 
   try {
     const latest = readFileSync(file, "utf8").trim();
-    if (latest && latest !== current) {
+    if (latest && isNewer(latest, current)) {
       const cmd = getUpgradeCommand();
       return ansi.yellow(`(v${current} ✘ → ${latest})`) + ansi.dim(` [${cmd}]`);
     }
