@@ -138,30 +138,46 @@ return {
   }
 }
 
-/** Resolve the Windows %APPDATA%\alacritty dir from inside WSL. */
+/**
+ * Resolve the Windows %APPDATA%\alacritty dir from inside WSL. Throws if the
+ * env var didn't expand to a real Windows path — when %APPDATA% is unset,
+ * cmd.exe echoes the literal "%APPDATA%" and wslpath passes it through with a
+ * zero exit, so without this guard we'd silently mirror to a junk relative dir.
+ */
 async function resolveWindowsAlacrittyDir(): Promise<string> {
   const appData = (await runQuiet(["cmd.exe", "/c", "echo %APPDATA%"]))
     .replace(/\r/g, "")
     .trim();
+  if (!/^[A-Za-z]:\\/.test(appData)) {
+    throw new Error(`%APPDATA% did not resolve to a Windows path: "${appData}"`);
+  }
   const unixPath = await runQuiet(["wslpath", "-u", appData]);
+  if (!unixPath.startsWith("/")) {
+    throw new Error(`wslpath returned a non-absolute path: "${unixPath}"`);
+  }
   return join(unixPath, "alacritty");
 }
 
 /**
  * Copy the rendered Alacritty fragments to the Windows host. Best-effort:
- * if WSL interop is off (cmd.exe/wslpath unavailable), warn and skip —
- * never break a theme switch or sync over the Windows mirror.
+ * any failure (interop off, /mnt/c locked or read-only) warns and skips —
+ * never breaks a theme switch or sync over the Windows mirror.
+ *
+ * Order matters: copy the fragments the shim imports (colors, common) before
+ * the shim itself, so a mid-loop failure can't leave the host importing a
+ * fresh launcher against a stale palette.
  */
 async function mirrorToWindows(): Promise<void> {
+  let winDir: string | undefined;
   try {
-    const winDir = await resolveWindowsAlacrittyDir();
+    winDir = await resolveWindowsAlacrittyDir();
     await mkdir(winDir, { recursive: true });
 
     const alacrittyDir = join(DOTFILES_DIR, "alacritty");
     const copies: [string, string][] = [
-      ["windows.toml", "alacritty.toml"],
-      ["common.toml", "common.toml"],
       ["colors.toml", "colors.toml"],
+      ["common.toml", "common.toml"],
+      ["windows.toml", "alacritty.toml"],
     ];
     for (const [src, dest] of copies) {
       await copyFile(join(alacrittyDir, src), join(winDir, dest));
@@ -169,9 +185,8 @@ async function mirrorToWindows(): Promise<void> {
 
     log.success(`Mirrored Alacritty config to ${winDir}`);
   } catch (err) {
-    log.warning(
-      `Skipped Windows Alacritty mirror (WSL interop unavailable): ${err}`,
-    );
+    const where = winDir ? ` (target: ${winDir})` : "";
+    log.warning(`Skipped Windows Alacritty mirror${where}: ${err}`);
   }
 }
 
