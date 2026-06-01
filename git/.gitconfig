@@ -49,10 +49,21 @@
 [mergetool "vscode"]
 	cmd = code --wait $MERGED
 
-# Machine-specific overrides (identity, signing, etc.) — gitignored
+[credential "https://github.com"]
+	helper = 
+	helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !gh auth git-credential
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+
+# Machine-specific overrides (identity, signing, per-machine credential routing) — gitignored.
+# Loaded after the defaults above so machine-local settings win.
 [include]
 	path = ~/.gitconfig.local
 
-# Personal identity for dotfiles repo (overrides default on corporate machines)
+# Personal identity for the dotfiles repo itself — must load LAST so it overrides
+# any work identity that ~/.gitconfig.local applies to ~/dotfiles on a work machine.
 [includeIf "gitdir:~/dotfiles/"]
 	path = ~/.gitconfig.personal
