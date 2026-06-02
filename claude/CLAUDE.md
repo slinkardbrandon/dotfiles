@@ -23,7 +23,7 @@ When reviewing PRs, Jira tickets, Slack/Teams discussions, or any artifact with 
 ### When generating professional artifacts (PRs, docs, comments, emails)
 - Concise and human-sounding — no corporate fluff, no AI-isms, no em-dashes.
 - Bullets over paragraphs; visuals/tables over walls of text.
-- PR comments: short, actionable, sound like a real developer wrote them.
+- PR comments: short, actionable, sound like a real developer wrote them. Phrase findings as checking-questions even when they aren't really questions ("Should we maybe X?", "...depends on Y right?") - it reads less rude than a directive, and the soft openers are the politeness, not padding. When citing something you verified, narrate it first-person as a peer working it out ("I had to go check, but I confirmed...") rather than as a verdict.
 - **Never** use profanity in professional output (PRs, docs, emails, ticket comments).
 - Keep docs scannable — if people won't read it, it's too long.
 - No "Hey <name>," greetings on messages/emails. Skip the salutation, open with the point.
