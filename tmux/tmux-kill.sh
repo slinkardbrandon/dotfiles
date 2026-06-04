@@ -15,6 +15,13 @@
 # window, killing the last window kills its session, killing the last session
 # exits the server.
 #
+# Concurrency: every kill runs under a mkdir-based mutex (flock isn't on macOS).
+# Without it, mashing the kill bind fires overlapping copies of this script —
+# a slow re-save (save.sh tars pane contents, then recreates the `last` symlink
+# at the very end) from one kill can land *after* the final kill wiped `last`,
+# resurrecting the session you just killed. Serializing makes the wipe the last
+# word.
+#
 # Usage: tmux-kill.sh pane|window|session
 
 set -u
@@ -22,6 +29,23 @@ set -u
 scope="${1:-pane}"
 resurrect_last="${HOME}/.tmux/resurrect/last"
 save_script="${HOME}/.tmux/plugins/tmux-resurrect/scripts/save.sh"
+lockdir="${TMPDIR:-/tmp}/tmux-kill.lock"
+
+# Portable mutex via mkdir (atomic create). Spin briefly; steal a stale lock so
+# a crashed holder can't wedge the bind forever.
+acquire_lock() {
+  local tries=0
+  while ! mkdir "$lockdir" 2>/dev/null; do
+    tries=$((tries + 1))
+    if [ "$tries" -ge 100 ]; then  # ~5s of contention -> assume stale, steal it
+      rmdir "$lockdir" 2>/dev/null
+      continue
+    fi
+    sleep 0.05
+  done
+  trap 'rmdir "$lockdir" 2>/dev/null' EXIT
+}
+acquire_lock
 
 # Snapshot current state *before* killing so we can predict server death.
 sessions=$(tmux list-sessions 2>/dev/null | wc -l | tr -d ' ')
@@ -49,10 +73,13 @@ case "$scope" in
     ;;
 esac
 
-# If the server is about to exit, there'll be nothing left to re-save — wipe the
-# snapshot now so continuum's restore doesn't bring the session back.
 if [ "$server_dies" = true ]; then
+  # Wipe the snapshot, then kill the whole server. kill-server (rather than
+  # kill-window) guarantees continuum's in-server periodic save can't fire in
+  # the gap and recreate `last`; the mutex guarantees no other save is mid-flight.
   rm -f "$resurrect_last"
+  tmux kill-server
+  exit 0
 fi
 
 case "$scope" in
@@ -67,7 +94,9 @@ case "$scope" in
 esac
 
 # Server survived — overwrite the snapshot with the post-kill reality so the
-# killed pane/window/session isn't resurrected, but everything else is.
-if [ "$server_dies" != true ] && [ -x "$save_script" ]; then
+# killed pane/window/session isn't resurrected, but everything else is. Run it
+# synchronously (no `&`) so the mutex is held until the save's `ln -fs ... last`
+# completes — that's what keeps a later kill's wipe from racing it.
+if [ -x "$save_script" ]; then
   "$save_script" quiet >/dev/null 2>&1
 fi
