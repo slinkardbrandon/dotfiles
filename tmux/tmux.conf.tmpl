@@ -12,6 +12,10 @@ bind C-a send-prefix
 set -g default-terminal "tmux-256color"
 set -as terminal-features ",xterm-256color:RGB:usstyle"
 
+# Enable modified key sequences like Ctrl/Shift/Alt+Enter
+set -g extended-keys on
+set -g extended-keys-format csi-u
+
 # Enable mouse
 set -g mouse on
 
