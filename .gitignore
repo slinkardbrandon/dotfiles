@@ -47,6 +47,12 @@ claude/*
 !claude/sync-usage.ts
 .claude/
 fish/functions/anthropic_proxy.fish
+# Company-specific shim: wraps `pi`/`claude` to inject AWS Bedrock env vars
+# (AWS_PROFILE, AWS_REGION, AWS_CA_BUNDLE). Kept local because the profile name
+# and internal cert path don't belong in a public dotfiles repo. To use this
+# pattern on a machine, drop a `function pi ... command pi $argv ... end` in
+# fish/functions/pi.fish that `set -lx`s whatever env the agent needs.
+fish/functions/pi.fish
 
 # Theme engine — generated configs (source of truth is the .tmpl files)
 themes/active.txt
