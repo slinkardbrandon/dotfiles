@@ -36,6 +36,10 @@ Thumbs.db
 # Machine-local configs
 *.local.yaml
 anthropic-proxy.json
+pi/settings.json
+pi/models.json
+pi/auth.json
+pi/sessions/
 claude/*
 !claude/CLAUDE.md
 !claude/settings.json

@@ -39,7 +39,7 @@ The setup is interactive — it prompts for each step (packages, symlinks, shell
 - Global gitignore
 
 ### Packages (auto-installed)
-ripgrep, fd, bat, eza, fzf, jq, tree, htop, gh, git-lfs, go, tmux, neovim
+ripgrep, fd, bat, eza, fzf, jq, tree, htop, gh, git-lfs, go, tmux, neovim, pi
 
 **macOS extras:** Homebrew casks (Chrome, Rectangle, 1Password, VS Code, Obsidian), macOS defaults, Dock cleanup
 
@@ -57,7 +57,8 @@ dotfiles/
 ├── tmux/                 # tmux.conf (symlinked)
 ├── git/                  # .gitconfig + .gitignore_global (symlinked)
 ├── alacritty/            # alacritty.toml (symlinked)
-└── claude/               # claude code settings (symlinked)
+├── claude/               # shared global agent instructions + claude settings
+└── pi/                   # pi coding agent keybindings (symlinked)
 ```
 
 All configs are **symlinked**, not copied — edit in `~/dotfiles/`, changes take effect immediately.
@@ -71,6 +72,7 @@ Shared config lives in the repo. Machine-specific stuff goes in local override f
 | Fish config | `~/.config/fish/config.local.fish` |
 | Fish aliases | `~/.config/fish/aliases.local.fish` |
 | Git (GPG key, etc.) | `~/.gitconfig.local` |
+| Pi providers/auth/sessions | `~/.pi/agent/settings.json`, `~/.pi/agent/models.json`, `~/.pi/agent/auth.json`, `~/.pi/agent/sessions/` |
 
 ## Keeping In Sync
 

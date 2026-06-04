@@ -115,6 +115,11 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
     log.info("Installing Claude Code CLI...");
     await run(["bash", "-c", "curl -fsSL https://claude.ai/install.sh | bash"]);
   },
+  pi: async () => {
+    if (await commandExists("pi")) return;
+    log.info("Installing pi coding agent...");
+    await run(["bash", "-c", "$HOME/.bun/bin/bun install -g --ignore-scripts @earendil-works/pi-coding-agent"]);
+  },
 };
 
 async function installHomebrew() {
@@ -210,6 +215,8 @@ export async function installPackages(platform: Platform) {
       log.warning("Failed to install some LSP tools via bun");
     }
   }
+
+  await LINUX_SPECIAL_INSTALL.pi();
 
   // Post-install: git-lfs
   if (await commandExists("git-lfs")) {

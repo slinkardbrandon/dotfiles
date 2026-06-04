@@ -79,13 +79,16 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".config", "bat", "themes"),
   });
 
-  // Claude Code global instructions (base tone; project/company CLAUDE.md
-  // layers on top via Claude's folder hierarchy). settings.json stays a
-  // one-time copy in setup.ts since it varies per machine.
-  links.push({
-    source: join(DOTFILES_DIR, "claude", "CLAUDE.md"),
-    target: join(home, ".claude", "CLAUDE.md"),
-  });
+  // Shared global coding-agent instructions. Claude reads CLAUDE.md; Pi reads
+  // AGENTS.md, so point both at the same source of truth.
+  links.push(
+    { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".claude", "CLAUDE.md") },
+    { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".pi", "agent", "AGENTS.md") },
+  );
+
+  // Pi coding agent configuration. Provider settings, auth, and sessions stay
+  // machine-local in ~/.pi/agent because they can contain internal endpoints.
+  links.push({ source: join(DOTFILES_DIR, "pi", "keybindings.json"), target: join(home, ".pi", "agent", "keybindings.json") });
 
   return links;
 }
