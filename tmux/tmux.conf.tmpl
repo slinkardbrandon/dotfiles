@@ -41,11 +41,16 @@ set -g detach-on-destroy off
 
 # Kill pane without confirmation
 bind x kill-pane
-bind -n M-x kill-pane
+# If killing the last pane in the last window, clear the resurrect save so the
+# next tmux start is clean. Accidental terminal closes don't hit this path —
+# the session stays alive in the server and continuum's save is untouched.
+bind -n M-x if-shell -F '#{&&:#{==:#{window_panes},1},#{==:#{session_windows},1}}' \
+  "run-shell 'rm -f ~/.tmux/resurrect/last; tmux kill-pane'" \
+  "kill-pane"
 
-# Kill session (switch first to avoid tmux spawning a new one)
-bind X run-shell 'S=$(tmux display-message -p "#S"); tmux switch-client -n; tmux kill-session -t "$S"'
-bind -n M-X run-shell 'S=$(tmux display-message -p "#S"); tmux switch-client -n; tmux kill-session -t "$S"'
+# Kill session — always clear resurrect save so next start is clean
+bind X run-shell 'rm -f ~/.tmux/resurrect/last; S=$(tmux display-message -p "#S"); tmux switch-client -n 2>/dev/null; tmux kill-session -t "$S"'
+bind -n M-X run-shell 'rm -f ~/.tmux/resurrect/last; S=$(tmux display-message -p "#S"); tmux switch-client -n 2>/dev/null; tmux kill-session -t "$S"'
 
 # Session picker / new session
 bind -n M-s choose-session
@@ -102,6 +107,12 @@ bind -n M-2 select-window -t 2
 bind -n M-3 select-window -t 3
 bind -n M-4 select-window -t 4
 bind -n M-5 select-window -t 5
+bind -n M-6 select-window -t 6
+bind -n M-7 select-window -t 7
+bind -n M-8 select-window -t 8
+bind -n M-9 select-window -t 9
+bind -n M-0 select-window -t 10
+bind -n M-- select-window -t 11
 
 # Pass focus events to applications (needed for nvim autoread + LSP refresh)
 set -g focus-events on
