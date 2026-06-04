@@ -53,6 +53,49 @@ interface StyleFns {
 const PACKAGE_NAME = "@earendil-works/pi-coding-agent";
 const STORE_VERSION = 1;
 const CACHE_READ_WEIGHT = 0.1;
+
+// GitHub Copilot AI Credits (effective 2026-06-01): usage is metered in AI
+// credits where 1 credit = $0.01 USD. Copilot models report $0 token cost in
+// pi (subscription-billed), so we derive credits ourselves from GitHub's
+// published per-1M-token rates. Source: GitHub docs "Models and pricing for
+// GitHub Copilot". Rates below are USD per 1M tokens.
+// https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing
+const COPILOT_PROVIDER = "github-copilot";
+const USD_PER_CREDIT = 0.01;
+
+interface CopilotRate {
+	input: number;
+	cachedInput: number;
+	output: number;
+	cacheWrite?: number; // Anthropic-only; falls back to input rate elsewhere
+}
+
+// Keyed by pi's github-copilot model id. Models absent from the table (e.g.
+// gpt-4o, grok-code-fast-1) are unlimited/free → 0 credits.
+const COPILOT_RATES: Record<string, CopilotRate> = {
+	// Anthropic
+	"claude-haiku-4.5": { input: 1.0, cachedInput: 0.1, cacheWrite: 1.25, output: 5.0 },
+	"claude-sonnet-4.5": { input: 3.0, cachedInput: 0.3, cacheWrite: 3.75, output: 15.0 },
+	"claude-sonnet-4.6": { input: 3.0, cachedInput: 0.3, cacheWrite: 3.75, output: 15.0 },
+	"claude-opus-4.5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 25.0 },
+	"claude-opus-4.6": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 25.0 },
+	"claude-opus-4.7": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 25.0 },
+	"claude-opus-4.8": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 25.0 },
+	// OpenAI
+	"gpt-4.1": { input: 2.0, cachedInput: 0.5, output: 8.0 },
+	"gpt-5-mini": { input: 0.25, cachedInput: 0.025, output: 2.0 },
+	"gpt-5.2": { input: 1.75, cachedInput: 0.175, output: 14.0 },
+	"gpt-5.2-codex": { input: 1.75, cachedInput: 0.175, output: 14.0 },
+	"gpt-5.3-codex": { input: 1.75, cachedInput: 0.175, output: 14.0 },
+	"gpt-5.4": { input: 2.5, cachedInput: 0.25, output: 15.0 },
+	"gpt-5.4-mini": { input: 0.75, cachedInput: 0.075, output: 4.5 },
+	"gpt-5.5": { input: 5.0, cachedInput: 0.5, output: 30.0 },
+	// Google
+	"gemini-2.5-pro": { input: 1.25, cachedInput: 0.125, output: 10.0 },
+	"gemini-3-flash-preview": { input: 0.5, cachedInput: 0.05, output: 3.0 },
+	"gemini-3.1-pro-preview": { input: 2.0, cachedInput: 0.2, output: 12.0 },
+	"gemini-3.5-flash": { input: 1.5, cachedInput: 0.15, output: 9.0 },
+};
 const WATER_ML_PER_1K_EFFECTIVE_TOKENS = 0.75;
 const ML_PER_GALLON = 3785.41;
 
@@ -186,6 +229,31 @@ function computeWaterCents(bucket: UsageBucket): number {
 
 function apiK(bucket: UsageBucket): number {
 	return Math.floor((bucket.input + bucket.output + bucket.cacheRead + bucket.cacheWrite) / 1000);
+}
+
+// USD cost for a single Copilot message's tokens, per GitHub's credit pricing.
+function copilotUsd(model: string, u: { input: number; output: number; cacheRead: number; cacheWrite: number }): number {
+	const r = COPILOT_RATES[model];
+	if (!r) return 0; // unlisted models are free/unlimited
+	const cacheWriteRate = r.cacheWrite ?? r.input;
+	return (
+		(u.input * r.input + u.cacheRead * r.cachedInput + u.cacheWrite * cacheWriteRate + u.output * r.output) / 1_000_000
+	);
+}
+
+// Sum AI credits (and USD equivalent) across all Copilot assistant turns in the
+// session. Mixed-provider sessions only count github-copilot messages.
+function getSessionCopilotCredits(ctx: ExtensionContext): { usd: number; credits: number; hasCopilot: boolean } {
+	let usd = 0;
+	let hasCopilot = false;
+	for (const entry of ctx.sessionManager.getEntries()) {
+		if (entry.type !== "message" || entry.message.role !== "assistant") continue;
+		const message = entry.message as AssistantMessage;
+		if (message.provider !== COPILOT_PROVIDER) continue;
+		hasCopilot = true;
+		usd += copilotUsd(message.model, message.usage);
+	}
+	return { usd, credits: usd / USD_PER_CREDIT, hasCopilot };
 }
 
 function zeroUsage(): UsageBucket {
@@ -347,7 +415,20 @@ function renderStatus(ctx: ExtensionContext, footerData: { getGitBranch(): strin
 	const mainPairs: Array<[string, string]> = [[line1Left, line1Right], [line2Left, line2Right]];
 	const desiredMainWidth = desiredSplitWidth(mainPairs);
 
-	if (!hasBurn) return buildBox(mainPairs, Math.min(width, desiredMainWidth), ansi, true);
+	// Session-only Copilot AI credits, shown only while the active model is a
+	// Copilot model. Credits still sum from copilot turns only, so a mixed
+	// session stays accurate.
+	const creditLines: string[] = [];
+	if (ctx.model?.provider === COPILOT_PROVIDER) {
+		const credit = getSessionCopilotCredits(ctx);
+		if (credit.hasCopilot && credit.credits > 0) {
+			const credits = credit.credits.toFixed(1);
+			const usd = credit.usd < 1 ? credit.usd.toFixed(3) : credit.usd.toFixed(2);
+			creditLines.push(`${ansi.teal(`🪙 ${credits} AI credits`)} ${ansi.dim(`≈ $${usd} · copilot · this session`)}`);
+		}
+	}
+
+	if (!hasBurn) return [...buildBox(mainPairs, Math.min(width, desiredMainWidth), ansi, true), ...creditLines];
 
 	const gallons = updateGallons(ctx.sessionManager.getSessionId(), usage);
 	const apiColW = Math.max(...[gallons.sessApiK, gallons.monthApiK, gallons.allApiK].map((n) => fmtTok(Math.max(0, n)).length));
@@ -363,12 +444,13 @@ function renderStatus(ctx: ExtensionContext, footerData: { getGitBranch(): strin
 	if (desiredMainWidth + visibleWidth(gap) + desiredBurnWidth <= width) {
 		const main = buildBox(mainPairs, desiredMainWidth, ansi, true);
 		const burn = buildBox(burnPairs, desiredBurnWidth, ansi);
-		return main.map((line, i) => `${line}${gap}${burn[i] ?? ""}`);
+		return [...main.map((line, i) => `${line}${gap}${burn[i] ?? ""}`), ...creditLines];
 	}
 
 	return [
 		...buildBox(mainPairs, Math.min(width, desiredMainWidth), ansi, true),
 		...buildBox(burnPairs, Math.min(width, desiredBurnWidth), ansi),
+		...creditLines,
 	];
 }
 
