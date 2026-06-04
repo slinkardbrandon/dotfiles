@@ -88,7 +88,10 @@ function getSymlinks(): SymlinkEntry[] {
 
   // Pi coding agent configuration. Provider settings, auth, and sessions stay
   // machine-local in ~/.pi/agent because they can contain internal endpoints.
-  links.push({ source: join(DOTFILES_DIR, "pi", "keybindings.json"), target: join(home, ".pi", "agent", "keybindings.json") });
+  links.push(
+    { source: join(DOTFILES_DIR, "pi", "keybindings.json"), target: join(home, ".pi", "agent", "keybindings.json") },
+    { source: join(DOTFILES_DIR, "pi", "extensions"), target: join(home, ".pi", "agent", "extensions") },
+  );
 
   return links;
 }
