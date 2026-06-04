@@ -91,6 +91,7 @@ function getSymlinks(): SymlinkEntry[] {
   links.push(
     { source: join(DOTFILES_DIR, "pi", "keybindings.json"), target: join(home, ".pi", "agent", "keybindings.json") },
     { source: join(DOTFILES_DIR, "pi", "extensions"), target: join(home, ".pi", "agent", "extensions") },
+    { source: join(DOTFILES_DIR, "pi", "agents"), target: join(home, ".pi", "agent", "agents") },
   );
 
   return links;
