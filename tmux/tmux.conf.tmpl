@@ -39,18 +39,15 @@ bind t new-window -c "#{pane_current_path}"
 # When a session is destroyed, switch to another instead of detaching
 set -g detach-on-destroy off
 
-# Kill pane without confirmation
-bind x kill-pane
-# If killing the last pane in the last window, clear the resurrect save so the
-# next tmux start is clean. Accidental terminal closes don't hit this path —
-# the session stays alive in the server and continuum's save is untouched.
-bind -n M-x if-shell -F '#{&&:#{==:#{window_panes},1},#{==:#{session_windows},1}}' \
-  "run-shell 'rm -f ~/.tmux/resurrect/last; tmux kill-pane'" \
-  "kill-pane"
+# Kill pane without confirmation. The helper re-saves the resurrect snapshot
+# afterward (or wipes it if this kills the last session) so killed panes don't
+# come back on the next tmux start.
+bind x run-shell '~/.tmux/tmux-kill.sh pane'
+bind -n M-x run-shell '~/.tmux/tmux-kill.sh pane'
 
-# Kill session — always clear resurrect save so next start is clean
-bind X run-shell 'rm -f ~/.tmux/resurrect/last; S=$(tmux display-message -p "#S"); tmux switch-client -n 2>/dev/null; tmux kill-session -t "$S"'
-bind -n M-X run-shell 'rm -f ~/.tmux/resurrect/last; S=$(tmux display-message -p "#S"); tmux switch-client -n 2>/dev/null; tmux kill-session -t "$S"'
+# Kill session
+bind X run-shell '~/.tmux/tmux-kill.sh session'
+bind -n M-X run-shell '~/.tmux/tmux-kill.sh session'
 
 # Session picker / new session
 bind -n M-s choose-session
@@ -99,7 +96,9 @@ bind -n C-q display-panes
 
 # Direct Meta (Option) key binds — no prefix needed
 bind -n M-t new-window -c "#{pane_current_path}"
-bind -n M-w kill-window
+# Kill window — re-saves the resurrect snapshot afterward (or wipes it if this
+# kills the last session) so killed windows don't resurrect.
+bind -n M-w run-shell '~/.tmux/tmux-kill.sh window'
 bind -n M-n next-window
 bind -n M-p previous-window
 bind -n M-1 select-window -t 1

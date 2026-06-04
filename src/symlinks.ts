@@ -63,6 +63,12 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".tmux.conf"),
   });
 
+  // Tmux kill helper — keeps the resurrect snapshot in sync after explicit kills
+  links.push({
+    source: join(DOTFILES_DIR, "tmux", "tmux-kill.sh"),
+    target: join(home, ".tmux", "tmux-kill.sh"),
+  });
+
   // Lazygit configuration (macOS uses ~/Library/Application Support/)
   const lazygitConfigDir =
     detectPlatform() === "macos"
