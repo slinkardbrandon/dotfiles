@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, readlinkSync, readdirSync } from "fs";
+import { existsSync, lstatSync, readlinkSync, readdirSync, rmSync } from "fs";
 import { join, basename, dirname } from "path";
 import { log, DOTFILES_DIR, run } from "./utils";
 import { detectPlatform, commandExists } from "./platform";
@@ -63,11 +63,6 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".tmux.conf"),
   });
 
-  // Tmux kill helper — keeps the resurrect snapshot in sync after explicit kills
-  links.push({
-    source: join(DOTFILES_DIR, "tmux", "tmux-kill.sh"),
-    target: join(home, ".tmux", "tmux-kill.sh"),
-  });
 
   // Lazygit configuration (macOS uses ~/Library/Application Support/)
   const lazygitConfigDir =
@@ -101,6 +96,22 @@ function getSymlinks(): SymlinkEntry[] {
   );
 
   return links;
+}
+
+function cleanupTmuxSessionRestore() {
+  const home = process.env.HOME!;
+  const paths = [
+    join(home, ".tmux", "tmux-kill.sh"),
+    join(home, ".tmux", "resurrect"),
+    join(home, ".tmux", "plugins", "tmux-resurrect"),
+    join(home, ".tmux", "plugins", "tmux-continuum"),
+  ];
+
+  for (const path of paths) {
+    if (!existsSync(path)) continue;
+    rmSync(path, { recursive: true, force: true });
+    log.success(`Removed tmux session restore artifact: ${path}`);
+  }
 }
 
 async function createSymlink(source: string, target: string) {
@@ -146,6 +157,7 @@ export async function setupSymlinks() {
   }
 
   log.success("All symlinks created");
+  cleanupTmuxSessionRestore();
   log.info("Fisher plugins will auto-install on first Fish shell launch");
 
   // Compile custom terminfo for undercurl support in tmux

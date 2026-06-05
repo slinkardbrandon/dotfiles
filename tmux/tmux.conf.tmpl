@@ -39,15 +39,13 @@ bind t new-window -c "#{pane_current_path}"
 # When a session is destroyed, switch to another instead of detaching
 set -g detach-on-destroy off
 
-# Kill pane without confirmation. The helper re-saves the resurrect snapshot
-# afterward (or wipes it if this kills the last session) so killed panes don't
-# come back on the next tmux start.
-bind x run-shell '~/.tmux/tmux-kill.sh pane'
-bind -n M-x run-shell '~/.tmux/tmux-kill.sh pane'
+# Kill pane without confirmation
+bind x kill-pane
+bind -n M-x kill-pane
 
 # Kill session
-bind X run-shell '~/.tmux/tmux-kill.sh session'
-bind -n M-X run-shell '~/.tmux/tmux-kill.sh session'
+bind X kill-session
+bind -n M-X kill-session
 
 # Session picker / new session
 bind -n M-s choose-session
@@ -96,9 +94,8 @@ bind -n C-q display-panes
 
 # Direct Meta (Option) key binds — no prefix needed
 bind -n M-t new-window -c "#{pane_current_path}"
-# Kill window — re-saves the resurrect snapshot afterward (or wipes it if this
-# kills the last session) so killed windows don't resurrect.
-bind -n M-w run-shell '~/.tmux/tmux-kill.sh window'
+# Kill window
+bind -n M-w kill-window
 bind -n M-n next-window
 bind -n M-p previous-window
 bind -n M-1 select-window -t 1
@@ -174,17 +171,7 @@ if-shell "uname -r | grep -qi microsoft" \
 
 # Plugins (TPM)
 set -g @plugin 'tmux-plugins/tpm'
-set -g @plugin 'tmux-plugins/tmux-resurrect'
-set -g @plugin 'tmux-plugins/tmux-continuum'
 set -g @plugin 'tmux-plugins/tmux-open'
-
-# Resurrect settings — persist layout & directories, not programs
-set -g @resurrect-capture-pane-contents 'on'
-set -g @resurrect-processes 'false'
-
-# Continuum — auto-save every 15 min, auto-restore on tmux start
-set -g @continuum-restore 'on'
-set -g @continuum-save-interval '15'
 
 # Auto-install TPM if not present, then initialize
 if-shell "test ! -d ~/.tmux/plugins/tpm" \
