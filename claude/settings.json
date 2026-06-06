@@ -12,8 +12,31 @@
       "Glob(*)",
       "Grep(*)",
       "WebFetch(*)",
-      "WebSearch(*)",
-      "mcp__*"
+      "WebSearch(*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__mcp-atlassian__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/dotfiles/claude/hooks/atlassian-write-gate.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"/private/tmp/slynk-toolkit/hooks/bootstrap-hook.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
@@ -24,5 +47,7 @@
     "frontend-design@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true
   },
-  "skipDangerousModePermissionPrompt": true
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true
 }
