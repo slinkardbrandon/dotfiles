@@ -1,7 +1,5 @@
 import chalk from "chalk";
 import { confirm } from "@inquirer/prompts";
-import { existsSync, copyFileSync, mkdirSync } from "fs";
-import { join } from "path";
 import { log } from "./src/utils";
 import { detectPlatform, isWSL } from "./src/platform";
 import { installPackages } from "./src/packages";
@@ -11,24 +9,7 @@ import { setupKeys } from "./src/keys";
 import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
 import { applyMacOSDefaults, configureDock, configureLoginItems } from "./src/macos";
 import { getActiveTheme, generateConfigs } from "./src/theme";
-
-const DOTFILES_DIR = process.env.HOME ? join(process.env.HOME, "dotfiles") : "";
-
-function setupClaudeCode() {
-  const home = process.env.HOME!;
-  const targetDir = join(home, ".claude");
-  const targetFile = join(targetDir, "settings.json");
-  const templateFile = join(DOTFILES_DIR, "claude", "settings.json");
-
-  if (existsSync(targetFile)) {
-    log.info("Claude Code settings already exist, skipping");
-    return;
-  }
-
-  mkdirSync(targetDir, { recursive: true });
-  copyFileSync(templateFile, targetFile);
-  log.success("Created Claude Code settings from template");
-}
+import { setupAiHarnessConfig } from "./src/ai-harness";
 
 async function main() {
   const platform = detectPlatform();
@@ -54,8 +35,8 @@ async function main() {
     log.success(`Generated configs for ${theme.name} theme`);
   }
 
-  // Step 2b: Claude Code settings (one-time copy from template)
-  setupClaudeCode();
+  // Step 2b: AI harness defaults (copy-once; local config may diverge)
+  await setupAiHarnessConfig({ force: false });
 
   // Step 3: Set up Fish shell
   const doFish = await confirm({ message: "Set up Fish as default shell?", default: true });

@@ -87,13 +87,9 @@ function getSymlinks(): SymlinkEntry[] {
     { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".pi", "agent", "AGENTS.md") },
   );
 
-  // Pi coding agent configuration. Provider settings, auth, and sessions stay
-  // machine-local in ~/.pi/agent because they can contain internal endpoints.
-  links.push(
-    { source: join(DOTFILES_DIR, "pi", "keybindings.json"), target: join(home, ".pi", "agent", "keybindings.json") },
-    { source: join(DOTFILES_DIR, "pi", "extensions"), target: join(home, ".pi", "agent", "extensions") },
-    { source: join(DOTFILES_DIR, "pi", "agents"), target: join(home, ".pi", "agent", "agents") },
-  );
+  // Pi keybindings/extensions/agents are copy-once AI harness defaults, not
+  // symlinks. They are managed by setupAiHarnessConfig() so work and personal
+  // machines can diverge safely.
 
   return links;
 }

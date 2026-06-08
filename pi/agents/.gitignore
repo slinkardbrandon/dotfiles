@@ -1,0 +1,11 @@
+# New Pi agents are machine-local by default.
+# To make an agent shared, add an explicit !<name>.md allowlist entry here.
+*
+!.gitignore
+!planner.md
+!researcher.md
+!reviewer.md
+!scout.md
+!security.md
+!spec-checker.md
+!worker.md

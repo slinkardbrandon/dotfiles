@@ -19,8 +19,8 @@ dotfiles/
 ├── alacritty/            # alacritty template fragments + generated outputs
 ├── lazygit/              # config.yml.tmpl + generated config.yml
 ├── bat/                  # themes dir (symlinked)
-├── claude/               # global agent instructions + Claude Code settings (see below)
-├── pi/                   # pi keybindings + extensions (symlinked)
+├── claude/               # global agent instructions + Claude Code defaults (see below)
+├── pi/                   # Pi keybindings/extensions/agents defaults (copy-once)
 └── docs/specs/           # decision specs from past sessions
 ```
 
@@ -32,7 +32,8 @@ dotfiles/
 |---|---|
 | `platform.ts` | `detectPlatform()` → `"macos" \| "linux"`, `isWSL()` |
 | `packages.ts` | `installPackages()`, apt package list, special Linux installers |
-| `symlinks.ts` | `setupSymlinks()` — defines and creates all symlinks |
+| `symlinks.ts` | `setupSymlinks()` — defines and creates live symlinks |
+| `ai-harness.ts` | `setupAiHarnessConfig()` — copy-once Claude/Pi harness defaults and symlink migration |
 | `fish.ts` | Sets fish as default shell |
 | `git.ts` | `ensureGitconfigLocal()`, `ensureGitconfigPersonal()` |
 | `keys.ts` | GPG/SSH key setup |
@@ -68,7 +69,7 @@ Generated outputs are gitignored and materialized by running `generateConfigs()`
 
 ## Symlink map
 
-`src/symlinks.ts` → `setupSymlinks()` creates all of these. If you're adding a new config file, add the symlink entry there, not ad-hoc.
+`src/symlinks.ts` → `setupSymlinks()` creates all live symlinks below. If you're adding a config that should stay live-linked, add the symlink entry there, not ad-hoc. AI harness runtime config is the exception: use `src/ai-harness.ts` because those files intentionally diverge by machine.
 
 | Source (in repo) | Target (on machine) |
 |---|---|
@@ -87,8 +88,6 @@ Generated outputs are gitignored and materialized by running `generateConfigs()`
 | `bat/themes/` | `~/.config/bat/themes/` |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` |
 | `claude/CLAUDE.md` | `~/.pi/agent/AGENTS.md` |
-| `pi/keybindings.json` | `~/.pi/agent/keybindings.json` |
-| `pi/extensions/` | `~/.pi/agent/extensions/` |
 
 **Fish functions dir is symlinked as a whole** — `funcsave` writes directly into `fish/functions/`, which lands in the repo automatically. Fisher-managed functions are gitignored and auto-installed from `fish_plugins` on first shell launch.
 
@@ -102,6 +101,21 @@ This file (`AGENTS.md` in the repo root) is **project-level** context — specif
 - Edit `AGENTS.md` (this file) for dotfiles-specific instructions.
 
 `claude/settings.json` holds shared Claude Code settings (copied, not symlinked, on first setup — it's a template).
+
+## AI harness defaults
+
+Claude/Pi runtime config is copy-once because company and personal machines legitimately diverge. `src/ai-harness.ts` seeds these files and migrates old symlinks by backing up the current symlink-resolved contents, removing the symlink, and restoring the current state as a real file/dir:
+
+| Source default | Target on machine |
+|---|---|
+| `claude/settings.json` | `~/.claude/settings.json` |
+| `pi/keybindings.json` | `~/.pi/agent/keybindings.json` |
+| `pi/extensions/` | `~/.pi/agent/extensions/` |
+| `pi/agents/` | `~/.pi/agent/agents/` |
+
+Run `bun run ai-setup` to seed/migrate without overwriting existing local config. Run `bun run ai-setup -- --force` to review diffs and selectively reset local files from dotfiles defaults. Backups go under `~/.config/dotfiles/backups/ai-harness/`.
+
+New Pi agents/extensions are machine-local by default via `pi/agents/.gitignore` and `pi/extensions/.gitignore`. To share one across machines, add an explicit allowlist entry in the relevant `.gitignore` and commit the file. Generated repo-specific nudges/hooks do **not** belong in dotfiles.
 
 ## WSL-specific quirks
 

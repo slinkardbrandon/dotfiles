@@ -8,6 +8,7 @@ import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/
 import { getActiveTheme, generateConfigs } from "./src/theme";
 import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
 import { configureLoginItems } from "./src/macos";
+import { setupAiHarnessConfig } from "./src/ai-harness";
 
 const HOME = process.env.HOME!;
 const SSH_DIR = join(HOME, ".ssh");
@@ -201,6 +202,9 @@ async function sync() {
 
   // Ensure all symlinks are correct
   await setupSymlinks();
+
+  // AI harness defaults are copy-once so work/personal machines can diverge.
+  await setupAiHarnessConfig({ force: false, interactive: false });
 
   // Regenerate themed configs
   const theme = await getActiveTheme();

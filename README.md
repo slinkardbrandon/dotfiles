@@ -51,17 +51,17 @@ The setup is **Bun + TypeScript** — `bootstrap.sh` installs Bun, then everythi
 dotfiles/
 ├── bootstrap.sh          # installs bun, runs setup.ts
 ├── setup.ts              # interactive orchestrator
-├── src/                  # setup modules (packages, symlinks, fish, keys, macos)
+├── src/                  # setup modules (packages, symlinks, AI harness defaults, fish, keys, macos)
 ├── fish/                 # shell config + functions (symlinked)
 ├── nvim/                 # neovim config (symlinked as directory)
 ├── tmux/                 # tmux.conf (symlinked)
 ├── git/                  # .gitconfig + .gitignore_global (symlinked)
 ├── alacritty/            # alacritty.toml (symlinked)
-├── claude/               # shared global agent instructions + claude settings
-└── pi/                   # pi coding agent keybindings (symlinked)
+├── claude/               # shared global agent instructions + Claude defaults
+└── pi/                   # Pi coding agent defaults (copy-once)
 ```
 
-All configs are **symlinked**, not copied — edit in `~/dotfiles/`, changes take effect immediately.
+Most stable configs are **symlinked** — edit in `~/dotfiles/`, changes take effect immediately. AI harness runtime config is **copy-once** so company and personal machines can diverge safely.
 
 ## Machine-Specific Config
 
@@ -72,6 +72,8 @@ Shared config lives in the repo. Machine-specific stuff goes in local override f
 | Fish config | `~/.config/fish/config.local.fish` |
 | Fish aliases | `~/.config/fish/aliases.local.fish` |
 | Git (GPG key, etc.) | `~/.gitconfig.local` |
+| Claude settings | `~/.claude/settings.json` copied from `claude/settings.json` on first setup |
+| Pi keybindings/extensions/agents | copied from `pi/` on first setup; reset explicitly with `bun run ai-setup -- --force` |
 | Pi providers/auth/sessions | `~/.pi/agent/settings.json`, `~/.pi/agent/models.json`, `~/.pi/agent/auth.json`, `~/.pi/agent/sessions/` |
 
 ## Keeping In Sync
@@ -81,6 +83,8 @@ A drift checker runs once per day when you open a terminal:
 - Warns if you're behind or ahead of remote
 
 New fish functions created via `funcsave` automatically land in the repo (the functions directory is symlinked).
+
+AI harness defaults can be reseeded with `bun run ai-setup`. Existing local config is preserved by default; `bun run ai-setup -- --force` prints diffs and asks before replacing anything. Backups live under `~/.config/dotfiles/backups/ai-harness/`.
 
 ## Key Bindings
 

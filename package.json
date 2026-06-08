@@ -5,7 +5,8 @@
   "scripts": {
     "setup": "bun run setup.ts",
     "sync": "bun run sync.ts",
-    "theme": "bun run theme.ts"
+    "theme": "bun run theme.ts",
+    "ai-setup": "bun run ai-setup.ts"
   },
   "dependencies": {
     "chalk": "^5.4.1",

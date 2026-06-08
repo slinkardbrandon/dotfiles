@@ -1,0 +1,9 @@
+# New Pi extensions are machine-local by default.
+# To make an extension shared, add an explicit allowlist entry here.
+*
+!.gitignore
+!statusline.ts
+!jira/
+!jira/**
+!subagent/
+!subagent/**
