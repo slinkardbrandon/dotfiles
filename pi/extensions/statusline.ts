@@ -393,7 +393,7 @@ function renderStatus(ctx: ExtensionContext, footerData: { getGitBranch(): strin
 	if (context?.percent != null) {
 		const pct = Math.round(context.percent);
 		const barColor = pct >= 80 ? ansi.red : pct >= 50 ? ansi.yellow : ansi.green;
-		const filled = Math.floor((pct * 20) / 100);
+		const filled = Math.min(20, Math.max(0, Math.floor((pct * 20) / 100)));
 		const bar = barColor("█".repeat(filled)) + ansi.dim("░".repeat(20 - filled));
 		line2Left = `${bar} ${barColor(`${pct}%`)} ${ansi.dim("ctx")}`;
 	} else if (context?.contextWindow) {
