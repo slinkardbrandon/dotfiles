@@ -122,6 +122,18 @@ function colorPct(remaining: number, ansi: StyleFns): string {
 	return ansi.green(`${remaining}%`);
 }
 
+function normalizeContextPercent(percent: number): { label: string; clamped: number; remaining: number } | undefined {
+	const raw = Math.round(percent);
+	if (!Number.isFinite(raw)) return undefined;
+
+	const clamped = Math.min(100, Math.max(0, raw));
+	return {
+		label: raw > 100 ? "100%+" : `${clamped}%`,
+		clamped,
+		remaining: 100 - clamped,
+	};
+}
+
 function fmtElapsed(ms: number): string {
 	const s = Math.floor(ms / 1000);
 	const h = Math.floor(s / 3600);
@@ -389,13 +401,13 @@ function renderStatus(ctx: ExtensionContext, footerData: { getGitBranch(): strin
 	const line1Right = [`📁 ${cwdName}`, branch ? ` 🌿 ${branch}` : ""].join("");
 
 	const context = ctx.getContextUsage();
+	const contextPct = context?.percent == null ? undefined : normalizeContextPercent(context.percent);
 	let line2Left = "";
-	if (context?.percent != null) {
-		const pct = Math.round(context.percent);
-		const barColor = pct >= 80 ? ansi.red : pct >= 50 ? ansi.yellow : ansi.green;
-		const filled = Math.min(20, Math.max(0, Math.floor((pct * 20) / 100)));
+	if (contextPct) {
+		const barColor = contextPct.clamped >= 80 ? ansi.red : contextPct.clamped >= 50 ? ansi.yellow : ansi.green;
+		const filled = Math.floor((contextPct.clamped * 20) / 100);
 		const bar = barColor("█".repeat(filled)) + ansi.dim("░".repeat(20 - filled));
-		line2Left = `${bar} ${barColor(`${pct}%`)} ${ansi.dim("ctx")}`;
+		line2Left = `${bar} ${barColor(contextPct.label)} ${ansi.dim("ctx")}`;
 	} else if (context?.contextWindow) {
 		line2Left = `${ansi.dim("░".repeat(20))} ${ansi.dim(`?/${fmtCompactTokens(context.contextWindow)} ctx`)}`;
 	}
@@ -406,10 +418,9 @@ function renderStatus(ctx: ExtensionContext, footerData: { getGitBranch(): strin
 	}
 
 	const cost = usage.cost > 0 ? `$${usage.cost.toFixed(3)}` : "";
-	const contextRemaining = context?.percent == null ? undefined : 100 - Math.round(context.percent);
 	const line2Right = [
 		cost,
-		contextRemaining == null ? "" : `left: ${colorPct(contextRemaining, ansi)}`,
+		contextPct == null ? "" : `left: ${colorPct(contextPct.remaining, ansi)}`,
 	].filter(Boolean).join(` ${ansi.dim("·")} `);
 
 	const mainPairs: Array<[string, string]> = [[line1Left, line1Right], [line2Left, line2Right]];
