@@ -12,34 +12,13 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 
 // ─── Credentials ─────────────────────────────────────────────────────────────
 
-function loadCreds(): { url: string; email: string; token: string } {
-  // 1. Prefer env vars (set in shell config)
-  const envUrl = (process.env.JIRA_URL ?? "").replace(/\/$/, "");
-  const envEmail = process.env.JIRA_EMAIL ?? process.env.JIRA_USERNAME ?? "";
-  const envToken = process.env.JIRA_API_TOKEN ?? "";
-  if (envUrl && envEmail && envToken) return { url: envUrl, email: envEmail, token: envToken };
+const JIRA_URL = (process.env.JIRA_URL ?? "").replace(/\/$/, "");
+const JIRA_EMAIL = process.env.JIRA_EMAIL ?? "";
+const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN ?? "";
 
-  // 2. Fall back to ~/.copilot/mcp.json (Copilot MCP config)
-  try {
-    const raw = readFileSync(join(homedir(), ".copilot", "mcp.json"), "utf8");
-    const cfg = JSON.parse(raw);
-    const env = cfg?.servers?.atlassian?.env ?? {};
-    const url = (env.JIRA_URL ?? "").replace(/\/$/, "");
-    const email = env.JIRA_USERNAME ?? env.JIRA_EMAIL ?? "";
-    const token = env.JIRA_API_TOKEN ?? "";
-    if (url && email && token) return { url, email, token };
-  } catch { /* file missing or malformed — fall through */ }
-
-  return { url: "", email: "", token: "" };
-}
-
-const { url: JIRA_URL, email: JIRA_EMAIL, token: JIRA_API_TOKEN } = loadCreds();
 const CREDS_OK = JIRA_URL && JIRA_EMAIL && JIRA_API_TOKEN;
 const AUTH = `Basic ${Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString("base64")}`;
 
@@ -113,10 +92,18 @@ export default function (pi: ExtensionAPI) {
       start_at: Type.Optional(Type.Number({ description: "Pagination offset (0-based)", default: 0 })),
     }),
     async execute(_id, params, signal) {
-      const fields = params.fields ?? "summary,status,assignee,priority,issuetype,created,updated,labels,components,fixVersions";
+      const fields = (params.fields ?? "summary,status,assignee,priority,issuetype,created,updated,labels,components,fixVersions").split(",").map((f) => f.trim());
+      const body: Record<string, unknown> = {
+        jql: params.jql,
+        fields,
+        maxResults: params.limit ?? 25,
+      };
+      // New /search/jql uses cursor-based pagination; startAt is not supported
+      // Pass nextPageToken if start_at is provided as a stringified token
+      if (params.start_at) body.nextPageToken = String(params.start_at);
       const data = await jiraFetch(
-        apiUrl(`/search?jql=${encodeURIComponent(params.jql)}&fields=${encodeURIComponent(fields)}&maxResults=${params.limit ?? 25}&startAt=${params.start_at ?? 0}`),
-        {},
+        apiUrl("/search/jql"),
+        { method: "POST", body: JSON.stringify(body) },
         signal,
       );
       return { content: [{ type: "text", text: ok(data) }] };
