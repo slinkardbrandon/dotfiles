@@ -7,6 +7,7 @@ import { commandExists, detectPlatform } from "./src/platform";
 import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
 import { getActiveTheme, generateConfigs } from "./src/theme";
 import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
+import { configureLoginItems } from "./src/macos";
 
 const HOME = process.env.HOME!;
 const SSH_DIR = join(HOME, ".ssh");
@@ -192,6 +193,10 @@ async function sync() {
     await run(["sudo", "apt", "update", "-y"]);
     await run(["sudo", "apt", "upgrade", "-y", ...aptPackages]);
     await installSpecialPackages();
+  }
+
+  if (platform === "macos") {
+    await configureLoginItems();
   }
 
   // Ensure all symlinks are correct

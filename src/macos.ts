@@ -1,3 +1,4 @@
+import { existsSync } from "fs";
 import { log, run, runQuiet } from "./utils";
 import { commandExists } from "./platform";
 
@@ -7,6 +8,48 @@ async function defaults(args: string[]) {
 
 async function sudoDefaults(args: string[]) {
   await run(["sudo", "defaults", ...args]);
+}
+
+function appleScriptString(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+export async function configureLoginItems() {
+  log.step("Configuring login items");
+
+  const loginItems = [
+    { name: "Rectangle", path: "/Applications/Rectangle.app", hidden: true },
+  ];
+
+  for (const item of loginItems) {
+    if (!existsSync(item.path)) {
+      log.warning(`${item.name} not found at ${item.path}; skipping login item`);
+      continue;
+    }
+
+    try {
+      const exists = await runQuiet([
+        "osascript",
+        "-e",
+        `tell application "System Events" to exists login item "${appleScriptString(item.name)}"`,
+      ]);
+
+      if (exists === "true") {
+        log.info(`${item.name} already starts at login`);
+        continue;
+      }
+
+      await run([
+        "osascript",
+        "-e",
+        `tell application "System Events" to make login item at end with properties {path:"${appleScriptString(item.path)}", hidden:${item.hidden ? "true" : "false"}}`,
+      ]);
+      log.success(`Added ${item.name} to login items`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.warning(`Could not configure ${item.name} login item: ${message}`);
+    }
+  }
 }
 
 export async function applyMacOSDefaults() {

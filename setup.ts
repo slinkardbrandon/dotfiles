@@ -9,7 +9,7 @@ import { setupSymlinks } from "./src/symlinks";
 import { setupFish } from "./src/fish";
 import { setupKeys } from "./src/keys";
 import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
-import { applyMacOSDefaults, configureDock } from "./src/macos";
+import { applyMacOSDefaults, configureDock, configureLoginItems } from "./src/macos";
 import { getActiveTheme, generateConfigs } from "./src/theme";
 
 const DOTFILES_DIR = process.env.HOME ? join(process.env.HOME, "dotfiles") : "";
@@ -85,6 +85,8 @@ async function main() {
     if (doDock) {
       await configureDock();
     }
+
+    await configureLoginItems();
   }
 
   // Done
