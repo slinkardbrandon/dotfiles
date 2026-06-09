@@ -12,6 +12,10 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
+import { markdownToAdf } from "./adf.ts";
+
+// Jira Cloud v3 rich-text fields that must be ADF doc objects, not strings.
+const RICH_TEXT_FIELDS = ["description", "environment"] as const;
 
 // ─── Credentials ─────────────────────────────────────────────────────────────
 
@@ -49,7 +53,13 @@ async function jiraFetch(
     let detail = text;
     try {
       const parsed = JSON.parse(text);
-      detail = parsed.errorMessages?.join(", ") ?? parsed.message ?? text;
+      const fieldErrors = parsed.errors
+        ? Object.entries(parsed.errors).map(([k, v]) => `${k}: ${v}`)
+        : [];
+      detail =
+        [...(parsed.errorMessages ?? []), ...fieldErrors].join(", ") ||
+        parsed.message ||
+        text;
     } catch { /* keep raw text */ }
     throw new Error(`Jira ${res.status}: ${detail}`);
   }
@@ -147,7 +157,7 @@ export default function (pi: ExtensionAPI) {
           project: { key: params.project_key },
           summary: params.summary,
           issuetype: { name: params.issue_type },
-          ...(params.description ? { description: { type: "doc", version: 1, content: [{ type: "paragraph", content: [{ type: "text", text: params.description }] }] } } : {}),
+          ...(params.description ? { description: markdownToAdf(params.description) } : {}),
           ...extra,
         },
       };
@@ -168,6 +178,10 @@ export default function (pi: ExtensionAPI) {
     }),
     async execute(_id, params, signal) {
       const fields = JSON.parse(params.fields);
+      // Wrap string rich-text fields in ADF — Jira v3 rejects bare strings (400).
+      for (const f of RICH_TEXT_FIELDS) {
+        if (typeof fields[f] === "string") fields[f] = markdownToAdf(fields[f]);
+      }
       await jiraFetch(
         apiUrl(`/issue/${params.issue_key}`),
         { method: "PUT", body: JSON.stringify({ fields }) },
@@ -188,13 +202,7 @@ export default function (pi: ExtensionAPI) {
       body: Type.String({ description: "Comment text in Markdown" }),
     }),
     async execute(_id, params, signal) {
-      const body = {
-        body: {
-          type: "doc",
-          version: 1,
-          content: [{ type: "paragraph", content: [{ type: "text", text: params.body }] }],
-        },
-      };
+      const body = { body: markdownToAdf(params.body) };
       const data = await jiraFetch(
         apiUrl(`/issue/${params.issue_key}/comment`),
         { method: "POST", body: JSON.stringify(body) },
