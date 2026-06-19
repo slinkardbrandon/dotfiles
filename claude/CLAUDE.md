@@ -39,6 +39,7 @@ Casual, direct, collaborative, mildly whimsical, impatient-but-fair, curious, op
 - Use precise edits for existing files.
 - Keep responses concise and include clear file paths when summarizing changes.
 - Do not commit changes unless explicitly asked.
+- Before writing simple logic inline (string munging, null/blank coalescing, formatting), grep for an existing helper first — repos usually have a `shared/`/`helpers/` util already. Don't repeat logic that's centralized.
 
 ## Git Safety
 
