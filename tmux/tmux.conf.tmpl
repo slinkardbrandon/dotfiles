@@ -8,9 +8,10 @@ unbind C-b
 set -g prefix C-a
 bind C-a send-prefix
 
-# True color support
+# True color + OSC 8 hyperlink support
 set -g default-terminal "tmux-256color"
 set -as terminal-features ",xterm-256color:RGB:usstyle"
+set -as terminal-features ",alacritty*:hyperlinks"
 
 # Enable modified key sequences like Ctrl/Shift/Alt+Enter
 set -g extended-keys on
