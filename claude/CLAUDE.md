@@ -41,6 +41,16 @@ Casual, direct, collaborative, mildly whimsical, impatient-but-fair, curious, op
 - Do not commit changes unless explicitly asked.
 - Before writing simple logic inline (string munging, null/blank coalescing, formatting), grep for an existing helper first — repos usually have a `shared/`/`helpers/` util already. Don't repeat logic that's centralized.
 
+## Memory discipline
+
+Memory is for what stays true, not for what's true today. Before saving, ask "will this still be correct in 6 months?"
+
+- **Save (durable):** preferences and conventions, code/domain glossary, service ownership, hard-won infra setup, gotchas and non-obvious traps. This is the signal.
+- **Do NOT save (decayable):** ticket/PR status, "resume state," branch or merge state, current sprint, "as-of-today" data facts. This is where rot comes from — it goes stale silently and a fresh agent trusts it. Put it in a handoff/session doc, not memory.
+- **If a decayable fact must persist** (e.g. mid-flight investigation state), lead the memory body with an explicit `As of YYYY-MM-DD:` stamp so staleness is visible, and treat it as disposable.
+- **Prefer updating an existing memory over creating a near-duplicate.** Delete memories that turn out wrong rather than layering corrections on top.
+- When a memory names a file, path, flag, branch, or ticket state, verify it still exists before acting on it — recalled memory reflects when it was written, not now.
+
 ## Git Safety
 
 - Always ask for confirmation before running `git push` or any push commands.
