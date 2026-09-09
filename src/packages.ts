@@ -120,6 +120,21 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
     log.info("Installing pi coding agent...");
     await run(["bash", "-c", "$HOME/.bun/bin/bun install -g --ignore-scripts @earendil-works/pi-coding-agent"]);
   },
+  mempalace: async () => {
+    if (await commandExists("mempalace")) return;
+    log.info("Installing mempalace (local-first AI memory)...");
+    // --system-certs: trusts the OS cert store too, not just uv's bundled
+    // one — required behind a corporate TLS-inspecting proxy, harmless
+    // elsewhere. Chained in one shell so a freshly-installed uv (not yet
+    // on this process's PATH) is still visible to the tool-install step.
+    await run([
+      "bash",
+      "-c",
+      `command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
+       export PATH="$HOME/.local/bin:$PATH"
+       uv tool install --system-certs mempalace`,
+    ]);
+  },
 };
 
 async function installHomebrew() {
@@ -217,6 +232,7 @@ export async function installPackages(platform: Platform) {
   }
 
   await LINUX_SPECIAL_INSTALL.pi();
+  await LINUX_SPECIAL_INSTALL.mempalace();
 
   // Post-install: git-lfs
   if (await commandExists("git-lfs")) {

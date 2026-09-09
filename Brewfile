@@ -28,6 +28,7 @@ brew "pinentry-mac"
 
 # Programming languages and tools
 brew "go"
+brew "uv"
 
 # Utilities
 brew "defaultbrowser"
