@@ -40,4 +40,17 @@ export async function runQuiet(cmd: string[]): Promise<string> {
   return output.trim();
 }
 
+// Like runQuiet, but tolerates a non-zero exit and merges stderr. Some CLIs report
+// perfectly usable information on stderr and/or exit non-zero while doing so —
+// `gh auth status` does both — and runQuiet would throw that information away.
+export async function runCapture(cmd: string[]): Promise<string> {
+  const result = Bun.spawn(cmd, { stdout: "pipe", stderr: "pipe" });
+  await result.exited;
+  const [out, err] = await Promise.all([
+    new Response(result.stdout).text(),
+    new Response(result.stderr).text(),
+  ]);
+  return `${out}\n${err}`.trim();
+}
+
 export const DOTFILES_DIR = import.meta.dir.replace("/src", "");

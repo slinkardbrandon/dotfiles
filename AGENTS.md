@@ -91,6 +91,48 @@ Generated outputs are gitignored and materialized by running `generateConfigs()`
 
 **Fish functions dir is symlinked as a whole** — `funcsave` writes directly into `fish/functions/`, which lands in the repo automatically. Fisher-managed functions are gitignored and auto-installed from `fish_plugins` on first shell launch.
 
+## Git identity and GitHub account routing
+
+Two identities coexist on a work machine, routed by directory. `git/.gitconfig` includes them in this order — **last include wins**, so the order is load-bearing:
+
+| Config (gitignored, machine-local) | Applies to | Signing |
+|---|---|---|
+| `~/.gitconfig.local` | everything (default identity) | GPG |
+| `~/.gitconfig.personal` | `gitdir:~/dotfiles/` and `gitdir:~/personal/` | SSH |
+
+Clone personal repos into `~/personal/` and they inherit the personal identity automatically. `src/git.ts` creates that directory unconditionally, since the `includeIf` refers to it.
+
+### Do not "fix" the https rewrite
+
+```
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+```
+
+This line looks redundant next to the SSH keys in `~/.ssh/`, and it is **not**. Some corporate networks block SSH to GitHub outright — `github.com:22` refuses and the usual `ssh.github.com:443` fallback resets — so HTTPS is the only working transport. Removing the rewrite breaks every clone and push on those machines.
+
+**SSH keys here are for signing and identity, not transport.** A personal SSH *signing* key works fine on such networks because signing is a local operation that never touches the network.
+
+### Why push routing names the account explicitly
+
+`gh auth git-credential` only ever answers for gh's **globally active** account; asking it for any other username returns nothing. A `credential.username` hint therefore cannot route between two accounts. So each identity config carries its own credential helper that names its account and pulls that account's token from gh's keyring:
+
+```
+[credential "https://github.com"]
+	helper =                      # empty value resets the inherited helper list
+	helper = !f() { ... gh auth token --hostname github.com --user <acct> ... }; f
+```
+
+The empty `helper =` first is required — without it the helper inherited from `git/.gitconfig` still answers first. The payoff is that push identity is independent of `gh auth switch`.
+
+### Signing keys must match the author email
+
+GitHub marks a commit **Unverified** when the signing key's UID doesn't match the author email. `selectGpgKey()` in `src/git.ts` therefore filters candidate GPG keys by email and refuses to silently auto-select a mismatched key — auto-picking "the only key on the machine" is exactly how a work key ends up signing personal commits.
+
+### Migration on existing machines
+
+`ensureGitconfigLocal()` / `ensureGitconfigPersonal()` skip machines that already have an identity, so `ensureCredentialRouting()` backfills push routing separately on `bun run sync.ts`. It adds only the credential block, never touching name/email/signing, and no-ops when gh has fewer than two accounts (a single account is unambiguous, so there's nothing to route).
+
 ## The `claude/` directory
 
 `claude/CLAUDE.md` contains **global** agent instructions (Brandon's identity, communication style, git safety rules). It's symlinked to `~/.claude/CLAUDE.md` and `~/.pi/agent/AGENTS.md` so it applies to every agent session across all projects.

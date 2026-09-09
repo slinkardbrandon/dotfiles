@@ -6,6 +6,35 @@ import { type Platform, commandExists } from "./platform";
 
 const SSH_DIR = join(process.env.HOME!, ".ssh");
 const SSH_KEY = join(SSH_DIR, "id_ed25519");
+const PERSONAL_SIGNING_KEY = join(SSH_DIR, "id_ed25519_personal");
+const ALLOWED_SIGNERS = join(process.env.HOME!, ".config", "git", "allowed_signers");
+
+// Personal commits are SSH-signed with a dedicated key so they never carry a work
+// GPG identity (GitHub marks a commit Unverified when the signing key's UID doesn't
+// match the author email). Signing is purely local, so this works even behind a
+// corporate proxy that blocks SSH *transport* to GitHub.
+export async function ensurePersonalSigningKey(email: string): Promise<string> {
+  const pubPath = `${PERSONAL_SIGNING_KEY}.pub`;
+
+  if (!existsSync(PERSONAL_SIGNING_KEY)) {
+    await run(["mkdir", "-p", SSH_DIR]);
+    await run(["chmod", "700", SSH_DIR]);
+    await run(["ssh-keygen", "-t", "ed25519", "-C", email, "-f", PERSONAL_SIGNING_KEY, "-N", "", "-q"]);
+    log.success(`Generated personal signing key: ${PERSONAL_SIGNING_KEY}`);
+  }
+
+  // allowed_signers is what lets `git log --show-signature` verify locally; without
+  // it git can sign but reports "No principal matched".
+  const keyBody = (await Bun.file(pubPath).text()).trim().split(/\s+/).slice(0, 2).join(" ");
+  const existing = existsSync(ALLOWED_SIGNERS) ? await Bun.file(ALLOWED_SIGNERS).text() : "";
+  if (!existing.includes(keyBody)) {
+    await run(["mkdir", "-p", join(process.env.HOME!, ".config", "git")]);
+    await Bun.write(ALLOWED_SIGNERS, `${existing}${email} namespaces="git" ${keyBody}\n`);
+    await run(["chmod", "600", ALLOWED_SIGNERS]);
+  }
+
+  return pubPath;
+}
 
 async function ensureDeps(platform: Platform) {
   const missing: string[] = [];
@@ -212,9 +241,20 @@ async function uploadToGitHub(sshKeyPath: string, gpgKeyId: string | null, hostn
   try {
     await run(["gh", "auth", "status", "--hostname", hostname]);
   } catch {
+    // Printing a suggestion here and moving on means the key upload below is
+    // silently skipped, and nothing later enforces it — so offer to log in now.
     log.warning(`Not authenticated to ${displayName}`);
-    log.info(`To authenticate, run: gh auth login --hostname ${hostname}`);
-    return;
+    const loginNow = await confirm({ message: `Run 'gh auth login --hostname ${hostname}' now?`, default: true });
+    if (!loginNow) {
+      log.warning(`Skipping key upload to ${displayName} — keys will NOT be on the account.`);
+      return;
+    }
+    try {
+      await run(["gh", "auth", "login", "--hostname", hostname, "--git-protocol", "https", "--web"]);
+    } catch {
+      log.error(`Login to ${displayName} failed; skipping key upload.`);
+      return;
+    }
   }
 
   log.success(`Authenticated to ${displayName}`);
@@ -310,8 +350,12 @@ export async function setupKeys(platform: Platform) {
   }
 
   console.log("Next steps:");
-  console.log("1. If not already done, authenticate with GitHub: gh auth login");
-  console.log("2. Test SSH connection: ssh -T git@github.com");
-  console.log("3. Test GPG signing: git commit --allow-empty -m 'test signing'");
+  console.log("1. Verify key upload landed:   gh ssh-key list && gh gpg-key list");
+  console.log("   (needs scopes: gh auth refresh -s admin:public_key,admin:ssh_signing_key,read:gpg_key)");
+  console.log("2. Test signing:               git commit --allow-empty -m 'test signing'");
+  console.log("3. Confirm push identity:      git credential fill <<< $'protocol=https\\nhost=github.com\\n'");
   console.log("4. Store your backup securely if created\n");
+  console.log("Note: SSH transport to GitHub is blocked on some corporate networks. The shared");
+  console.log("gitconfig rewrites git@github.com: -> https://github.com/ so pushes use gh tokens;");
+  console.log("SSH keys are for signing/identity, not necessarily transport.\n");
 }

@@ -6,7 +6,6 @@
 
 [commit]
 	gpgsign = true
-	template = ~/.gitmessage
 
 [push]
 	autoSetupRemote = true
@@ -63,7 +62,10 @@
 [include]
 	path = ~/.gitconfig.local
 
-# Personal identity for the dotfiles repo itself — must load LAST so it overrides
-# any work identity that ~/.gitconfig.local applies to ~/dotfiles on a work machine.
+# Personal identity + credential routing — must load LAST so it overrides any work
+# identity that ~/.gitconfig.local applies on a work machine. Covers the dotfiles
+# repo itself plus everything under ~/personal/ (clone personal repos there).
 [includeIf "gitdir:~/dotfiles/"]
+	path = ~/.gitconfig.personal
+[includeIf "gitdir:~/personal/"]
 	path = ~/.gitconfig.personal
