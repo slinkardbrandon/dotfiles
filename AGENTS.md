@@ -88,6 +88,7 @@ Generated outputs are gitignored and materialized by running `generateConfigs()`
 | `bat/themes/` | `~/.config/bat/themes/` |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` |
 | `claude/CLAUDE.md` | `~/.pi/agent/AGENTS.md` |
+| `pi/APPEND_SYSTEM.md` | `~/.pi/agent/APPEND_SYSTEM.md` |
 
 **Fish functions dir is symlinked as a whole** — `funcsave` writes directly into `fish/functions/`, which lands in the repo automatically. Fisher-managed functions are gitignored and auto-installed from `fish_plugins` on first shell launch.
 

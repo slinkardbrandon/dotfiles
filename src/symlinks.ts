@@ -87,6 +87,13 @@ function getSymlinks(): SymlinkEntry[] {
     { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".pi", "agent", "AGENTS.md") },
   );
 
+  // Pi's append-only system prompt fragment — static text, not machine-divergent
+  // config, so it stays live-linked like CLAUDE.md/AGENTS.md above.
+  links.push({
+    source: join(DOTFILES_DIR, "pi", "APPEND_SYSTEM.md"),
+    target: join(home, ".pi", "agent", "APPEND_SYSTEM.md"),
+  });
+
   // Pi keybindings/extensions/agents are copy-once AI harness defaults, not
   // symlinks. They are managed by setupAiHarnessConfig() so work and personal
   // machines can diverge safely.
