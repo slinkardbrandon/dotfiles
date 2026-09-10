@@ -64,8 +64,12 @@
 
 # Personal identity + credential routing — must load LAST so it overrides any work
 # identity that ~/.gitconfig.local applies on a work machine. Covers the dotfiles
-# repo itself plus everything under ~/personal/ (clone personal repos there).
+# repo itself, everything under ~/personal/ (clone personal repos there), and
+# slynk-toolkit specifically since it lives under ~/dev/ (work-routed) despite
+# being a personal repo (github.com/slinkardbrandon/slynk-toolkit).
 [includeIf "gitdir:~/dotfiles/"]
 	path = ~/.gitconfig.personal
 [includeIf "gitdir:~/personal/"]
+	path = ~/.gitconfig.personal
+[includeIf "gitdir:~/dev/slynk-toolkit/"]
 	path = ~/.gitconfig.personal
