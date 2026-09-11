@@ -123,7 +123,7 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
   mempalace: async () => {
     if (await commandExists("mempalace")) return;
     log.info("Installing mempalace (local-first AI memory)...");
-    // --system-certs: trusts the OS cert store too, not just uv's bundled
+    // --native-tls: trusts the OS cert store too, not just uv's bundled
     // one — required behind a corporate TLS-inspecting proxy, harmless
     // elsewhere. Chained in one shell so a freshly-installed uv (not yet
     // on this process's PATH) is still visible to the tool-install step.
@@ -132,7 +132,7 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
       "-c",
       `command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
        export PATH="$HOME/.local/bin:$PATH"
-       uv tool install --system-certs mempalace`,
+       uv tool install --native-tls mempalace`,
     ]);
   },
 };
@@ -167,6 +167,13 @@ export async function installSpecialPackages() {
   for (const pkg of specialPackages) {
     await LINUX_SPECIAL_INSTALL[pkg]();
   }
+}
+
+// Tools installed the same way on both platforms (bun / uv, not brew or apt).
+// Both setup and sync call this, so a Mac sync doesn't silently skip them.
+export async function installCrossPlatformTools() {
+  await LINUX_SPECIAL_INSTALL.pi();
+  await LINUX_SPECIAL_INSTALL.mempalace();
 }
 
 async function installWithApt(packages: string[]) {
@@ -231,8 +238,7 @@ export async function installPackages(platform: Platform) {
     }
   }
 
-  await LINUX_SPECIAL_INSTALL.pi();
-  await LINUX_SPECIAL_INSTALL.mempalace();
+  await installCrossPlatformTools();
 
   // Post-install: git-lfs
   if (await commandExists("git-lfs")) {
