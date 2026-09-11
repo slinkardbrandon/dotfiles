@@ -6,7 +6,8 @@
     "setup": "bun run setup.ts",
     "sync": "bun run sync.ts",
     "theme": "bun run theme.ts",
-    "ai-setup": "bun run ai-setup.ts"
+    "ai-setup": "bun run ai-setup.ts",
+    "copilot-export": "bun run src/copilot-transcripts.ts"
   },
   "dependencies": {
     "chalk": "^5.4.1",
