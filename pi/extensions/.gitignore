@@ -3,6 +3,7 @@
 *
 !.gitignore
 !statusline.ts
+!brevity.ts
 !jira/
 !jira/**
 !subagent/
