@@ -50,5 +50,5 @@ Memory is for what stays true. Before saving, ask "will this still be correct in
 
 ## Git Safety
 
-- Always confirm before `git push`.
+- Normal `git push` needs no confirmation. Confirm before force pushes or any destructive git action (history rewrites on shared branches, branch deletes, hard resets that drop work).
 - **Never** add `Co-authored-by:` trailers or tool-attribution lines. Brandon authors his own commits.
