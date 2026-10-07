@@ -94,6 +94,15 @@ function getSymlinks(): SymlinkEntry[] {
     target: join(home, ".pi", "agent", "APPEND_SYSTEM.md"),
   });
 
+  // Codex and Copilot CLI read the same global instructions. Codex also gets the
+  // per-prompt brevity hook (agents/brevity.md); Copilot CLI drops per-prompt
+  // hook output, so the static instructions are all it can get.
+  links.push(
+    { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".codex", "AGENTS.md") },
+    { source: join(DOTFILES_DIR, "codex", "hooks.json"), target: join(home, ".codex", "hooks.json") },
+    { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".copilot", "copilot-instructions.md") },
+  );
+
   // Pi keybindings/extensions/agents are copy-once AI harness defaults, not
   // symlinks. They are managed by setupAiHarnessConfig() so work and personal
   // machines can diverge safely.
