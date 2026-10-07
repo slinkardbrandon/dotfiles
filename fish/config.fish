@@ -56,6 +56,12 @@ end
 set -gx EDITOR nvim
 set -gx VISUAL nvim
 
+# The mempalace-pi package auto-ingests with `mempalace mine <dir>` and no
+# flags — projects mode instead of convos, and a wing derived from the session
+# directory name. This gates that one call; diary prompts and MCP tools still
+# work. pi/extensions/mempalace-ingest does the ingest correctly instead.
+set -gx MEMPALACE_SUSPEND_AUTOSAVE 1
+
 # Bun configuration
 set -gx BUN_INSTALL "$HOME/.bun"
 

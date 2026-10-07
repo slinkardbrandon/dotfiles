@@ -4,7 +4,7 @@ import { select, input, confirm } from "@inquirer/prompts";
 import { log, run, runQuiet, DOTFILES_DIR } from "./src/utils";
 import { setupSymlinks } from "./src/symlinks";
 import { commandExists, detectPlatform } from "./src/platform";
-import { installSpecialPackages, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
+import { installSpecialPackages, installCrossPlatformTools, LINUX_APT_PACKAGES, APT_NAME_MAP } from "./src/packages";
 import { getActiveTheme, generateConfigs } from "./src/theme";
 import { ensureGitconfigLocal, ensureGitconfigPersonal } from "./src/git";
 import { configureLoginItems } from "./src/macos";
@@ -195,6 +195,9 @@ async function sync() {
     await run(["sudo", "apt", "upgrade", "-y", ...aptPackages]);
     await installSpecialPackages();
   }
+
+  // bun/uv-installed tools live outside brew and apt — sync them on both platforms.
+  await installCrossPlatformTools();
 
   if (platform === "macos") {
     await configureLoginItems();

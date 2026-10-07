@@ -33,7 +33,8 @@ dotfiles/
 | `platform.ts` | `detectPlatform()` → `"macos" \| "linux"`, `isWSL()` |
 | `packages.ts` | `installPackages()`, apt package list, special Linux installers |
 | `symlinks.ts` | `setupSymlinks()` — defines and creates live symlinks |
-| `ai-harness.ts` | `setupAiHarnessConfig()` — copy-once Claude/Pi harness defaults and symlink migration |
+| `ai-harness.ts` | `setupAiHarnessConfig()` — copy-once Claude/Pi harness defaults, symlink migration, mempalace MCP registration |
+| `copilot-transcripts.ts` | `exportCopilotTranscripts()` — converts Copilot CLI sessions into mineable transcripts |
 | `fish.ts` | Sets fish as default shell |
 | `git.ts` | `ensureGitconfigLocal()`, `ensureGitconfigPersonal()` |
 | `keys.ts` | GPG/SSH key setup |
@@ -158,7 +159,26 @@ Claude/Pi runtime config is copy-once because company and personal machines legi
 
 Run `bun run ai-setup` to seed/migrate without overwriting existing local config. Run `bun run ai-setup -- --force` to review diffs and selectively reset local files from dotfiles defaults. Backups go under `~/.config/dotfiles/backups/ai-harness/`.
 
+Directory entries are copy-once, but `seedMissingChildren()` still delivers **new** shared children (e.g. a newly allowlisted extension) to a machine that already has the directory. Existing files are never touched — updating one requires `ai-setup -- --force`.
+
 New Pi agents/extensions are machine-local by default via `pi/agents/.gitignore` and `pi/extensions/.gitignore`. To share one across machines, add an explicit allowlist entry in the relevant `.gitignore` and commit the file. Generated repo-specific nudges/hooks do **not** belong in dotfiles.
+
+## AI memory (mempalace)
+
+One palace at `~/.mempalace/palace`, shared by every harness. Repos map to **wings**, categories to **rooms** — there is no palace-per-repo. `mempalace init <repo>` is only needed to mine a repo's *code/docs*; conversation mining derives wings from `cwd` and needs no per-repo setup.
+
+| Harness | Read (tools) | Write (ingest) |
+|---|---|---|
+| pi | `mempalace-pi` package bridges `mempalace-mcp` into pi tools | `pi/extensions/mempalace-ingest` on session close + pre-compact |
+| Copilot CLI | `mempalace` entry merged into `~/.copilot/mcp-config.json` | `bun run copilot-export` (or the `mempalace_copilot` fish function) |
+| Claude Code | `claude mcp add --scope user` | hooks in `claude/settings.json` |
+
+Two deliberate workarounds, both deletable once upstream catches up:
+
+- **`MEMPALACE_SUSPEND_AUTOSAVE=1`** (`fish/config.fish`) gates mempalace-pi's auto-ingest, which shells `mempalace mine <dir>` with no flags: projects mode instead of convos, and a wing named after the session directory. `pi/extensions/mempalace-ingest` does it correctly instead, and also covers session close, which mempalace-pi never handled.
+- **`src/copilot-transcripts.ts`** converts `~/.copilot/session-state/*/events.jsonl` into the `[{role, content}]` JSON mempalace already accepts, because mempalace has no Copilot normalizer ([#2124](https://github.com/MemPalace/mempalace/issues/2124); PRs #2053 and #1592 were both closed unmerged). It self-detects native support and tells you to delete it. Mined state per wing lives in `~/.cache/mempalace-copilot/.mined.json`.
+
+Wing slugs are duplicated in `src/copilot-transcripts.ts` and `pi/extensions/mempalace-ingest/index.ts` (the extension can't import from `src/`). Keep them in sync or the same repo splits across two wings.
 
 ## WSL-specific quirks
 

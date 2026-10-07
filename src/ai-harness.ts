@@ -1,7 +1,8 @@
 import { confirm } from "@inquirer/prompts";
 import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readdirSync, realpathSync, rmSync } from "fs";
 import { basename, dirname, join } from "path";
-import { DOTFILES_DIR, log } from "./utils";
+import { commandExists } from "./platform";
+import { DOTFILES_DIR, log, run, runQuiet } from "./utils";
 
 interface AiHarnessEntry {
   name: string;
@@ -109,6 +110,33 @@ function copyLocalEntry(source: string, target: string, kind: AiHarnessEntry["ki
     recursive: kind === "dir",
     verbatimSymlinks: true,
   });
+}
+
+/**
+ * Copy any dotfiles-shipped children a directory entry is missing.
+ *
+ * Directory entries are copy-once, so once ~/.pi/agent/extensions exists a
+ * newly shared extension would never reach an existing machine — it would only
+ * arrive via `ai-setup --force`, which prompts to reset everything else too.
+ * Seeding only absent children keeps machine-local files untouched while still
+ * delivering new shared defaults.
+ */
+function seedMissingChildren(entry: AiHarnessEntry) {
+  if (entry.kind !== "dir" || !existsSync(entry.source)) return 0;
+
+  let seeded = 0;
+  for (const child of readdirSync(entry.source)) {
+    const source = join(entry.source, child);
+    if (shouldSkipDefault(source)) continue;
+
+    const target = join(entry.target, child);
+    if (targetExists(target)) continue;
+
+    copyDefaultEntry(source, target, lstatSync(source).isDirectory() ? "dir" : "file");
+    log.success(`${entry.name}: added ${child} from dotfiles default`);
+    seeded++;
+  }
+  return seeded;
 }
 
 function hardenBackupPermissions(path: string) {
@@ -225,7 +253,100 @@ export async function setupAiHarnessConfig(options: SetupAiHarnessOptions = {}) 
     }
 
     log.info(`${entry.name}: local config exists, leaving it alone`);
+    seedMissingChildren(entry);
   }
 
   if (backedUp && backupDir) log.info(`AI harness backup: ${backupDir}`);
+
+  await registerMempalaceMcp();
+}
+
+// ─── mempalace MCP registration ──────────────────────────────────────────────
+//
+// One palace (~/.mempalace), three harnesses, three different wiring stories:
+//
+//   pi          — no MCP client at all; the `mempalace-pi` package bridges it
+//                 (installed in src/packages.ts, nothing to register here)
+//   copilot cli — MCP via ~/.copilot/mcp-config.json, merged below
+//   claude code — MCP via `claude mcp add`, plus the hooks already in
+//                 claude/settings.json
+//
+// Only copilot and claude need registering, and neither file can be symlinked
+// from dotfiles: copilot's holds plaintext API tokens, and claude writes its
+// own runtime state into ~/.claude.json. So we merge a single key instead.
+//
+// Auto-ingest differs per harness: mempalace's own hooks support claude-code
+// and codex, pi is handled by pi/extensions/mempalace-ingest, and Copilot CLI
+// has no hook system — its transcripts are ingested after the fact by
+// src/copilot-transcripts.ts.
+const COPILOT_MCP_CONFIG = join(HOME, ".copilot", "mcp-config.json");
+
+async function registerMempalaceMcp() {
+  if (!(await commandExists("mempalace-mcp"))) {
+    log.info("mempalace-mcp not installed, skipping MCP registration");
+    return;
+  }
+
+  await registerMempalaceWithCopilot();
+  await registerMempalaceWithClaude();
+}
+
+async function registerMempalaceWithCopilot() {
+  if (!(await commandExists("copilot"))) return;
+  if (!existsSync(COPILOT_MCP_CONFIG)) {
+    log.info("Copilot CLI has no mcp-config.json yet, skipping mempalace registration");
+    return;
+  }
+
+  let config: { mcpServers?: Record<string, unknown> };
+  try {
+    config = await Bun.file(COPILOT_MCP_CONFIG).json();
+  } catch {
+    log.warning(`Could not parse ${COPILOT_MCP_CONFIG}, leaving it alone`);
+    return;
+  }
+
+  const servers = config.mcpServers ?? {};
+  if (servers.mempalace) {
+    log.info("Copilot CLI: mempalace MCP already registered");
+    return;
+  }
+
+  // This file carries live API tokens, so back it up privately before writing.
+  const backupDir = ensureBackupDir();
+  const backupPath = join(backupDir, "home__.copilot__mcp-config.json");
+  cpSync(COPILOT_MCP_CONFIG, backupPath);
+  chmodSync(backupPath, 0o600);
+
+  config.mcpServers = {
+    ...servers,
+    // "*" matches the existing entries' shape; copilot only supports tool
+    // allowlists, so there is no equivalent of the claude settings denylist.
+    mempalace: { tools: ["*"], type: "stdio", command: "mempalace-mcp", args: [] },
+  };
+
+  await Bun.write(COPILOT_MCP_CONFIG, `${JSON.stringify(config, null, 4)}\n`);
+  chmodSync(COPILOT_MCP_CONFIG, 0o600);
+  log.success(`Copilot CLI: registered mempalace MCP (backup: ${backupPath})`);
+}
+
+async function registerMempalaceWithClaude() {
+  if (!(await commandExists("claude"))) return;
+
+  try {
+    const registered = await runQuiet(["claude", "mcp", "list"]);
+    if (registered.includes("mempalace")) {
+      log.info("Claude Code: mempalace MCP already registered");
+      return;
+    }
+  } catch {
+    // `claude mcp list` exits non-zero when nothing is registered yet.
+  }
+
+  try {
+    await run(["claude", "mcp", "add", "--scope", "user", "mempalace", "--", "mempalace-mcp"]);
+    log.success("Claude Code: registered mempalace MCP");
+  } catch {
+    log.warning("Could not register mempalace with Claude Code — run: claude mcp add --scope user mempalace -- mempalace-mcp");
+  }
 }

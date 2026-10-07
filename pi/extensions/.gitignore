@@ -8,3 +8,5 @@
 !jira/**
 !subagent/
 !subagent/**
+!mempalace-ingest/
+!mempalace-ingest/**
