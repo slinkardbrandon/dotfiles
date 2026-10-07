@@ -6,7 +6,7 @@
  * Right table: token burn + water displacement (session / month / all-time)
  *
  * Data files (auto-created):
- *   /tmp/claude-latest-version       hourly npm version cache
+ *   /tmp/claude-latest-version-{npm,brew}  hourly latest-version cache, per install source
  *   ~/.claude/session-gallons.json   persistent gallon tracking (cache-weighted water)
  */
 
@@ -85,11 +85,16 @@ function stripAnsi(s: string): string {
   return s.replace(/\x1b\[[0-9;]*[mK]/g, "");
 }
 
+// Emoji rendered double-width by terminals despite having a codepoint < 0x10000
+// (visWidth's normal cutoff for "wide"). ⚡ (U+26A1) is the one we use.
+const WIDE_BMP = new Set([0x26a1]);
+
 function visWidth(s: string): number {
   const clean = stripAnsi(s);
   let w = 0;
   for (const ch of clean) {
-    w += (ch.codePointAt(0)! >= 0x10000) ? 2 : 1;
+    const cp = ch.codePointAt(0)!;
+    w += (cp >= 0x10000 || WIDE_BMP.has(cp)) ? 2 : 1;
   }
   return w;
 }
@@ -134,22 +139,31 @@ function heatColor(tokK: number): (s: string) => string {
   return ansi.yellow;
 }
 
-// Format token count: 545k or 546M (integer math only)
+// Format token count: 545k, 23.4M, 546M, 1.2B, or 546B (integer math only)
+// Decimal dropped once the whole part hits 100+ — a tenth of 130M is noise.
 function fmtTok(tokK: number): string {
+  if (tokK >= 1_000_000) {
+    const whole = Math.floor(tokK / 1_000_000);
+    const frac = Math.floor((tokK % 1_000_000) / 100_000); // one decimal
+    return whole < 100 && frac > 0 ? `${whole}.${frac}B` : `${whole}B`;
+  }
   if (tokK >= 1000) {
     const whole = Math.floor(tokK / 1000);
     const frac = Math.floor((tokK % 1000) / 100); // one decimal
-    return frac > 0 ? `${whole}.${frac}M` : `${whole}M`;
+    return whole < 100 && frac > 0 ? `${whole}.${frac}M` : `${whole}M`;
   }
   return `${tokK}k`;
 }
 
-// Format gallon-cents as "X.XX gal" (no floating point)
-function fmtGal(cents: number): string {
+// Format gallon-cents as "~X.XX gal" (no floating point).
+// wholeWidth right-pads the "~"+whole chunk as one unit so decimal points
+// line up and the pad space lands before the "~", not between it and the digit.
+function fmtGal(cents: number, wholeWidth = 0): string {
   const whole = Math.floor(cents / 100);
   const frac = cents % 100;
   // Comma-separate the whole part for readability
-  return `~${whole.toLocaleString()}.${String(frac).padStart(2, "0")} gal`;
+  const tildeNum = `~${whole.toLocaleString()}`.padStart(wholeWidth + 1);
+  return `${tildeNum}.${String(frac).padStart(2, "0")} gal`;
 }
 
 // ── Table rendering ──────────────────────────────────────────────────────────
@@ -177,25 +191,59 @@ function getGitBranch(cwd: string): string | null {
 
 // ── Version check ────────────────────────────────────────────────────────────
 
-function getUpgradeCommand(): string {
+// Where claude came from decides both the upgrade command and which registry
+// holds the version we should compare against. The brew cask trails npm by a
+// few releases, so comparing a brew install to npm shows a permanent ✘.
+interface InstallSource {
+  upgrade: string;
+  cacheFile: string;
+  fetchCmd: string;
+}
+
+const NPM_SOURCE: InstallSource = {
+  upgrade: "npm install -g @anthropic-ai/claude-code",
+  cacheFile: "/tmp/claude-latest-version-npm",
+  fetchCmd: `npm view @anthropic-ai/claude-code version --json --registry https://registry.npmjs.org 2>/dev/null | tr -d '"'`,
+};
+
+const BREW_FETCH =
+  `curl -fsL https://formulae.brew.sh/api/cask/claude-code.json 2>/dev/null | grep -o '"version":"[^"]*"' | head -1 | cut -d'"' -f4`;
+
+function getInstallSource(): InstallSource {
   try {
     const r = Bun.spawnSync(["which", "claude"], { stdout: "pipe" });
     const path = r.stdout.toString().trim();
-    // Resolve symlink to detect standalone installer
+    // Resolve symlink to detect standalone installer / brew cask
     const resolved = Bun.spawnSync(["readlink", path], { stdout: "pipe" })
       .stdout.toString().trim() || path;
     if (resolved.includes(".local/share/claude/versions")) {
-      return "curl -fsSL https://claude.ai/install.sh | bash";
+      return {
+        upgrade: "curl -fsSL https://claude.ai/install.sh | bash",
+        cacheFile: NPM_SOURCE.cacheFile,
+        fetchCmd: NPM_SOURCE.fetchCmd,
+      };
+    }
+    if (resolved.includes("/Caskroom/")) {
+      return {
+        upgrade: "brew upgrade --cask claude-code",
+        cacheFile: "/tmp/claude-latest-version-brew",
+        fetchCmd: BREW_FETCH,
+      };
     }
     if (path.includes("/homebrew/") || path.includes("/Cellar/")) {
-      return "brew upgrade claude";
+      return {
+        upgrade: "brew upgrade claude-code",
+        cacheFile: "/tmp/claude-latest-version-brew",
+        fetchCmd: BREW_FETCH,
+      };
     }
   } catch {}
-  return "npm install -g @anthropic-ai/claude-code";
+  return NPM_SOURCE;
 }
 
 function checkVersion(current: string): string {
-  const file = "/tmp/claude-latest-version";
+  const source = getInstallSource();
+  const file = source.cacheFile;
 
   // Background refresh if stale (>60 min) or missing
   let needsRefresh = true;
@@ -205,14 +253,14 @@ function checkVersion(current: string): string {
   } catch {}
 
   if (needsRefresh) {
-    Bun.spawn(["sh", "-c", `npm view @anthropic-ai/claude-code version --json --registry https://registry.npmjs.org 2>/dev/null | tr -d '"' > "${file}"`]);
+    // Only overwrite on a non-empty result, so a failed fetch keeps the old cache
+    Bun.spawn(["sh", "-c", `v=$(${source.fetchCmd}); [ -n "$v" ] && printf '%s' "$v" > "${file}"`]);
   }
 
   try {
     const latest = readFileSync(file, "utf8").trim();
     if (latest && isNewer(latest, current)) {
-      const cmd = getUpgradeCommand();
-      return ansi.yellow(`(v${current} ✘ → ${latest})`) + ansi.dim(` [${cmd}]`);
+      return ansi.yellow(`(v${current} ✘ → ${latest})`) + ansi.dim(` [${source.upgrade}]`);
     }
     return ansi.teal(`(CLI v${current} ✓)`);
   } catch {
@@ -414,12 +462,12 @@ function mkBurnLine(
   api: number,
   cents: number,
   apiColW: number,
-  galColW: number,
+  galWholeW: number,
 ): string {
   api = Math.max(0, api);
   cents = Math.max(0, cents);
   const apiStr = fmtTok(api).padStart(apiColW);
-  const galStr = fmtGal(cents).padStart(galColW);
+  const galStr = fmtGal(cents, galWholeW);
   return `⚡ ${heatColor(api)(apiStr)} tokens  💧 ${ansi.water(galStr)}`;
 }
 
@@ -528,11 +576,11 @@ const mainLines = [
 if (hasBurn) {
   // Column widths for alignment (measure formatted strings, not raw numbers)
   const apiColW = Math.max(...[sessApiK, monthApiK, allApiK].map((n) => fmtTok(Math.max(0, n)).length));
-  const galColW = Math.max(...[sessWater, monthWater, allWater].map((n) => fmtGal(Math.max(0, n)).length));
+  const galWholeW = Math.max(...[sessWater, monthWater, allWater].map((n) => Math.floor(Math.max(0, n) / 100).toLocaleString().length));
 
-  const bcSess = mkBurnLine(sessApiK, sessWater, apiColW, galColW);
-  const bcMonth = mkBurnLine(monthApiK, monthWater, apiColW, galColW);
-  const bcAll = mkBurnLine(allApiK, allWater, apiColW, galColW);
+  const bcSess = mkBurnLine(sessApiK, sessWater, apiColW, galWholeW);
+  const bcMonth = mkBurnLine(monthApiK, monthWater, apiColW, galWholeW);
+  const bcAll = mkBurnLine(allApiK, allWater, apiColW, galWholeW);
 
   const blSess = ansi.dim("this session");
   const blMonth = ansi.dim("this month");
