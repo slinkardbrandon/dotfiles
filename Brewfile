@@ -18,6 +18,7 @@ brew "fd"
 brew "bat"
 brew "eza"
 brew "fzf"
+brew "libpq"
 
 # Git and GPG tools
 brew "gh"
