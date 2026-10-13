@@ -46,6 +46,7 @@ claude/*
 !claude/statusline.ts
 !claude/sync-usage.ts
 !claude/hooks/
+!claude/sounds/
 .claude/
 fish/functions/anthropic_proxy.fish
 # Company-specific shim: wraps `pi`/`claude` to inject AWS Bedrock env vars
