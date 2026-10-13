@@ -23,6 +23,11 @@ else if test -d /usr/local/bin
     set -gx PATH /usr/local/bin $PATH
 end
 
+# libpq (keg-only — psql client without a full postgres server)
+if test -d /opt/homebrew/opt/libpq/bin
+    set -gx PATH /opt/homebrew/opt/libpq/bin $PATH
+end
+
 # Linuxbrew
 if test -d /home/linuxbrew/.linuxbrew/bin
     set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
