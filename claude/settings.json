@@ -81,6 +81,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun ~/dotfiles/claude/hooks/play-sound.ts"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
