@@ -10,3 +10,5 @@
 !subagent/**
 !mempalace-ingest/
 !mempalace-ingest/**
+!stop-sound/
+!stop-sound/**
