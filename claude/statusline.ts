@@ -158,7 +158,14 @@ function fmtTok(tokK: number): string {
 // Format gallon-cents as "~X.XX gal" (no floating point).
 // wholeWidth right-pads the "~"+whole chunk as one unit so decimal points
 // line up and the pad space lands before the "~", not between it and the digit.
-function fmtGal(cents: number, wholeWidth = 0): string {
+// hadUsage distinguishes real-but-rounds-to-zero (cache-heavy turns weighted
+// down to <0.01 gal) from genuinely no activity — the former prints "<0.01 gal"
+// instead of the misleading "~0.00 gal".
+function fmtGal(cents: number, wholeWidth = 0, hadUsage = cents > 0): string {
+  const totalLen = wholeWidth + 1 + 1 + 2 + 1 + 3; // ~W.FF gal
+  if (cents === 0 && hadUsage) {
+    return "<0.01 gal".padStart(totalLen);
+  }
   const whole = Math.floor(cents / 100);
   const frac = cents % 100;
   // Comma-separate the whole part for readability
@@ -467,7 +474,7 @@ function mkBurnLine(
   api = Math.max(0, api);
   cents = Math.max(0, cents);
   const apiStr = fmtTok(api).padStart(apiColW);
-  const galStr = fmtGal(cents, galWholeW);
+  const galStr = fmtGal(cents, galWholeW, api > 0);
   return `⚡ ${heatColor(api)(apiStr)} tokens  💧 ${ansi.water(galStr)}`;
 }
 
