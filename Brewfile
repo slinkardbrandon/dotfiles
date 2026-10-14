@@ -46,6 +46,7 @@ cask "1password"
 cask "visual-studio-code"
 cask "obsidian"
 cask "bruno"
+cask "openwhispr"
 
 # Go packages
 go "golang.org/x/tools/gopls"

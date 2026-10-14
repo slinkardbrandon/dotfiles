@@ -1,5 +1,5 @@
 import { log, run, runQuiet, DOTFILES_DIR } from "./utils";
-import { type Platform, commandExists } from "./platform";
+import { type Platform, commandExists, isWSL } from "./platform";
 
 // APT package name overrides (where name differs from Homebrew)
 export const APT_NAME_MAP: Record<string, string> = {
@@ -120,6 +120,27 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
     log.info("Installing pi coding agent...");
     await run(["bash", "-c", "$HOME/.bun/bin/bun install -g --ignore-scripts @earendil-works/pi-coding-agent"]);
   },
+  // OpenWhispr is a GUI dictation app: its global hotkey and auto-paste act on
+  // whichever desktop session owns the focused window. Under WSL that session
+  // is Windows, never WSLg, so the Linux build could only ever type into Linux
+  // GUI apps — useless next to a Windows Alacritty. WSL therefore installs the
+  // Windows build through winget interop; a native Linux desktop gets the .deb.
+  openwhispr: async () => {
+    if (isWSL()) {
+      await installOpenWhisprOnWindows();
+      return;
+    }
+    if (await commandExists("openwhispr")) return;
+    log.info("Installing OpenWhispr...");
+    await run([
+      "bash",
+      "-c",
+      `OW_VERSION=$(curl -s "https://api.github.com/repos/OpenWhispr/openwhispr/releases/latest" | grep -Po '"tag_name": "v\\K[^"]*') && \
+       curl -Lo /tmp/openwhispr.deb "https://github.com/OpenWhispr/openwhispr/releases/download/v\${OW_VERSION}/OpenWhispr-\${OW_VERSION}-linux-amd64.deb" && \
+       sudo apt install -y /tmp/openwhispr.deb && \
+       rm /tmp/openwhispr.deb`,
+    ]);
+  },
   mempalace: async () => {
     if (await commandExists("mempalace")) return;
     log.info("Installing mempalace (local-first AI memory)...");
@@ -136,6 +157,43 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
     ]);
   },
 };
+
+// winget package id for the Windows OpenWhispr build.
+const OPENWHISPR_WINGET_ID = "OpenWhispr.OpenWhispr";
+
+// Install OpenWhispr on the Windows host from inside WSL. Best-effort: with
+// interop off there is no winget.exe to call, so warn and point at the
+// installer rather than failing the whole package step.
+async function installOpenWhisprOnWindows() {
+  try {
+    const listed = await runQuiet(["winget.exe", "list", "--exact", "--id", OPENWHISPR_WINGET_ID]);
+    if (listed.includes(OPENWHISPR_WINGET_ID)) {
+      log.success("OpenWhispr already installed on the Windows host");
+      return;
+    }
+  } catch {
+    // winget exits non-zero both when the package is missing and when interop
+    // is off — fall through and let the install attempt say which it was.
+  }
+
+  log.info("Installing OpenWhispr on the Windows host (winget)...");
+  try {
+    await run([
+      "winget.exe",
+      "install",
+      "--exact",
+      "--id",
+      OPENWHISPR_WINGET_ID,
+      "--accept-package-agreements",
+      "--accept-source-agreements",
+    ]);
+    log.success("OpenWhispr installed on the Windows host");
+  } catch {
+    log.warning(
+      "Could not reach winget from WSL — install OpenWhispr on Windows manually: https://github.com/OpenWhispr/openwhispr/releases/latest",
+    );
+  }
+}
 
 async function installHomebrew() {
   if (await commandExists("brew")) {

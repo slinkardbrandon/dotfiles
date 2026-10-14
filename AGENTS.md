@@ -188,6 +188,7 @@ These will bite you if you forget them:
 - **Mason can't install npm-based LSP tools** — use `bun install -g` instead. The packages module does this automatically in `installPackages()` on Linux.
 - **`tree-sitter-cli` requires Node** — install via bun, but needs `nvm install lts` first since bun shells don't inherit nvm's node.
 - **`~/.local/bin` must be explicit in fish PATH** — tmux panes don't inherit the parent's PATH; lazygit, delta, etc. live in `~/.local/bin` on Linux and won't be found otherwise.
+- **GUI desktop apps belong on the Windows host, not in WSLg** — a global-hotkey app like OpenWhispr acts on whichever session owns the focused window, which is Windows. `LINUX_SPECIAL_INSTALL.openwhispr` installs the `.deb` on a native Linux desktop but shells `winget.exe` under `isWSL()`. If interop is off, it warns and skips.
 - **Windows Alacritty** runs as a native Windows process and reads `%APPDATA%\alacritty\alacritty.toml`, not the WSL symlink. `generateConfigs()` mirrors rendered fragments there via `wslpath` + `cmd.exe` when `isWSL()` is true. If interop is off, it warns and skips — it never breaks a sync.
 
 ## Package installation strategy
