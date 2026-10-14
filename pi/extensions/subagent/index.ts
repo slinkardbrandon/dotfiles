@@ -12,20 +12,68 @@
  * Uses JSON mode to capture structured output from subagents.
  */
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import type { Message } from "@earendil-works/pi-ai";
 import { StringEnum } from "@earendil-works/pi-ai";
-import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+import { type ExtensionAPI, getAgentDir, getMarkdownTheme, withFileMutationQueue } from "@earendil-works/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.ts";
 
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
+
+/** Sentinel exit code meaning "still running". Never a real exit status. */
+const RUNNING = -1;
+
+/**
+ * Kill a child that has produced no stdout for this long AND has burned no CPU
+ * across its process tree in that window. Both conditions matter: pi streams
+ * nothing while a bash tool runs, so silence alone is not a wedge -- a child
+ * running `find /` is silent for many minutes while working hard. The wedge
+ * this guards against sat at 0.8s of CPU over 6 minutes with its turn already
+ * finished.
+ */
+const STDOUT_IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+
+/**
+ * Once a child reports its turn finished, it should exit immediately. Still
+ * alive after this means something it spawned is holding the event loop open,
+ * which is the original hang, caught in seconds instead of minutes.
+ */
+const SETTLED_EXIT_GRACE_MS = 10_000;
+
+/** CPU seconds across the window below which a silent child counts as wedged. */
+const LIVENESS_CPU_EPSILON_SECONDS = 0.5;
+
+/** Grace period between SIGTERM and SIGKILL. */
+const KILL_GRACE_MS = 5000;
+
+/**
+ * How deep subagents may nest. Each level fans out up to MAX_CONCURRENCY, so
+ * the worst case is MAX_CONCURRENCY ** MAX_SUBAGENT_DEPTH concurrent model
+ * sessions: 16 at depth 2, 64 at depth 3.
+ */
+const MAX_SUBAGENT_DEPTH = 2;
+
+/** Set on every child so it knows how deep it already is. */
+const SUBAGENT_DEPTH_ENV = "PI_SUBAGENT_DEPTH";
+
+/** Subagent transcripts older than this are pruned. Kept for post-mortems. */
+const SUBAGENT_SESSION_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * pi warns on stderr when --session-id names a session that does not exist yet,
+ * which is the normal case for a fresh child. Left in, it becomes the "error"
+ * reported for any failed subagent, because getResultOutput falls back to
+ * stderr.
+ */
+const BENIGN_SESSION_WARNING = /^Warning: No project session found with id .*creating a new session/u;
 const COLLAPSED_ITEM_COUNT = 10;
 const PER_TASK_OUTPUT_CAP = 50 * 1024;
 
@@ -152,6 +200,16 @@ interface SingleResult {
 	stopReason?: string;
 	errorMessage?: string;
 	step?: number;
+	/** When the child was launched, for elapsed display. */
+	startedAt?: number;
+	/** Last time the child produced anything, so a stalled run is visible. */
+	lastActivityAt?: number;
+	/** Why the harness intervened, kept separate so an error message cannot mask it. */
+	note?: string;
+	/** Session id handed to the child, so a failed run can be opened later. */
+	sessionId?: string;
+	/** Resolved transcript path, once the child has written one. */
+	sessionFile?: string;
 }
 
 interface SubagentDetails {
@@ -174,14 +232,176 @@ function getFinalOutput(messages: Message[]): string {
 }
 
 function isFailedResult(result: SingleResult): boolean {
+	// A child that has not exited yet has not failed yet.
+	if (result.exitCode === RUNNING) return false;
 	return result.exitCode !== 0 || result.stopReason === "error" || result.stopReason === "aborted";
 }
 
 function getResultOutput(result: SingleResult): string {
-	if (isFailedResult(result)) {
-		return result.errorMessage || result.stderr || getFinalOutput(result.messages) || "(no output)";
+	const base = isFailedResult(result)
+		? result.errorMessage || result.stderr || getFinalOutput(result.messages) || "(no output)"
+		: getFinalOutput(result.messages) || "(no output)";
+	// Appended rather than fallen back to: a provider error like "terminated"
+	// would otherwise hide the fact that the harness killed the child, making a
+	// five-minute timeout look like an instant failure.
+	return result.note ? `${base}\n\n${result.note}` : base;
+}
+
+/** Where to look when a subagent misbehaves. Only worth printing on failure. */
+function transcriptNote(result: SingleResult): string {
+	if (!isFailedResult(result) || !result.sessionFile) return "";
+	return `\n\n[transcript: ${result.sessionFile}]`;
+}
+
+/** Parse a ps TIME field: `mm:ss.ff` or `hh:mm:ss`. */
+function parsePsTime(value: string): number {
+	const parts = value.trim().split(":");
+	if (parts.length < 2) return 0;
+	const seconds = Number.parseFloat(parts.pop() ?? "0");
+	const minutes = Number.parseInt(parts.pop() ?? "0", 10);
+	const hours = parts.length > 0 ? Number.parseInt(parts.pop() ?? "0", 10) : 0;
+	if (!Number.isFinite(seconds) || !Number.isFinite(minutes) || !Number.isFinite(hours)) return 0;
+	return hours * 3600 + minutes * 60 + seconds;
+}
+
+/**
+ * Total CPU seconds consumed by a process and every descendant. A subagent's
+ * real work usually happens in a grandchild (pi -> bash -> find), so the pi
+ * process alone looks idle either way and cannot distinguish the two cases.
+ */
+function treeCpuSeconds(rootPid: number): number {
+	// pid 0 is the root of the entire process table and -1 is the "unknown pid"
+	// sentinel from a failed spawn. Walking from either sums the whole machine,
+	// which would read as "busy" forever and disable the timeout entirely.
+	if (!Number.isInteger(rootPid) || rootPid <= 1) return 0;
+	try {
+		const ps = spawnSync("ps", ["-eo", "pid=,ppid=,time="], { encoding: "utf-8", timeout: 5000 });
+		if (ps.status !== 0 || !ps.stdout) return 0;
+
+		const children = new Map<number, number[]>();
+		const cpu = new Map<number, number>();
+		for (const line of ps.stdout.split("\n")) {
+			const match = line.trim().match(/^(\d+)\s+(\d+)\s+(\S+)$/u);
+			if (!match) continue;
+			const pid = Number(match[1]);
+			const ppid = Number(match[2]);
+			cpu.set(pid, parsePsTime(match[3]));
+			const siblings = children.get(ppid);
+			if (siblings) siblings.push(pid);
+			else children.set(ppid, [pid]);
+		}
+
+		let total = 0;
+		const queue = [rootPid];
+		const seen = new Set<number>();
+		while (queue.length > 0) {
+			const pid = queue.pop();
+			if (pid === undefined || seen.has(pid)) continue;
+			seen.add(pid);
+			total += cpu.get(pid) ?? 0;
+			for (const child of children.get(pid) ?? []) queue.push(child);
+		}
+		return total;
+	} catch {
+		return 0;
 	}
-	return getFinalOutput(result.messages) || "(no output)";
+}
+
+/** Compact elapsed time: `45s`, `4m12s`, `1h03m`. */
+function formatDuration(ms: number): string {
+	const totalSeconds = Math.max(0, Math.round(ms / 1000));
+	if (totalSeconds < 60) return `${totalSeconds}s`;
+	const minutes = Math.floor(totalSeconds / 60);
+	const seconds = totalSeconds % 60;
+	if (minutes < 60) return `${minutes}m${String(seconds).padStart(2, "0")}s`;
+	return `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}m`;
+}
+
+/**
+ * Elapsed for a running child, plus an idle marker when it has gone quiet.
+ * Without this a 20-second run and a 20-minute one render identically, which
+ * is what makes every slow fanout look like a hang.
+ */
+function runningSuffix(result: SingleResult): string {
+	if (result.exitCode !== RUNNING || !result.startedAt) return "";
+	const elapsed = formatDuration(Date.now() - result.startedAt);
+	const quietMs = result.lastActivityAt ? Date.now() - result.lastActivityAt : 0;
+	return quietMs > 60_000 ? ` ${elapsed}, quiet ${formatDuration(quietMs)}` : ` ${elapsed}`;
+}
+
+/** Wall-clock span of a whole call, running or finished. */
+function totalElapsed(results: SingleResult[]): string {
+	const starts = results.map((r) => r.startedAt).filter((v): v is number => typeof v === "number");
+	if (starts.length === 0) return "";
+	return formatDuration(Date.now() - Math.min(...starts));
+}
+
+/** Current nesting depth of this pi process. 0 when a human started it. */
+function currentSubagentDepth(): number {
+	const parsed = Number.parseInt(process.env[SUBAGENT_DEPTH_ENV] ?? "", 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function subagentSessionsRoot(): string {
+	return path.join(getAgentDir(), "sessions", "subagents");
+}
+
+/**
+ * Group a run's children under the session that spawned them, so "what did this
+ * conversation delegate" is one directory listing.
+ */
+function parentSessionId(ctx: { sessionManager?: { getSessionFile?: () => string | undefined } }): string {
+	const file = ctx.sessionManager?.getSessionFile?.();
+	if (typeof file === "string" && file.length > 0) {
+		const base = path.basename(file, ".jsonl");
+		const separator = base.indexOf("_");
+		const id = separator >= 0 ? base.slice(separator + 1) : base;
+		if (id) return id;
+	}
+	return "no-parent-session";
+}
+
+/**
+ * Find the transcript a child just wrote. The filename is
+ * `<timestamp>_<session-id>.jsonl`, and we chose the id, so a match is exact.
+ */
+function findSessionFile(sessionDir: string, sessionId: string): string | undefined {
+	try {
+		const match = fs.readdirSync(sessionDir).find((name) => name.includes(sessionId));
+		return match ? path.join(sessionDir, match) : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Drop subagent transcripts past the retention window. Keyed on the newest file
+ * in each directory so a long-running parent never prunes its own children.
+ */
+function pruneOldSubagentSessions(): void {
+	try {
+		const root = subagentSessionsRoot();
+		const cutoff = Date.now() - SUBAGENT_SESSION_RETENTION_MS;
+		for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+			if (!entry.isDirectory()) continue;
+			const dir = path.join(root, entry.name);
+			let newest = 0;
+			try {
+				for (const name of fs.readdirSync(dir)) {
+					try {
+						newest = Math.max(newest, fs.statSync(path.join(dir, name)).mtimeMs);
+					} catch {
+						// Unreadable entry; ignore it rather than keeping the directory forever.
+					}
+				}
+			} catch {
+				continue;
+			}
+			if (newest > 0 && newest < cutoff) fs.rmSync(dir, { recursive: true, force: true });
+		}
+	} catch {
+		// Best effort. Never fail a delegation over housekeeping.
+	}
 }
 
 function truncateParallelOutput(output: string): string {
@@ -268,6 +488,7 @@ async function runSingleAgent(
 	signal: AbortSignal | undefined,
 	onUpdate: OnUpdateCallback | undefined,
 	makeDetails: (results: SingleResult[]) => SubagentDetails,
+	sessionDir: string,
 ): Promise<SingleResult> {
 	const agent = agents.find((a) => a.name === agentName);
 
@@ -285,9 +506,33 @@ async function runSingleAgent(
 		};
 	}
 
-	const args: string[] = ["--mode", "json", "-p", "--no-session"];
+	if (agent.missingExtensions && agent.missingExtensions.length > 0) {
+		// Failing here beats running the agent without the tools it asked for: a
+		// lens that quietly reviews without Jira returns [] and looks like a pass.
+		return {
+			agent: agentName,
+			agentSource: agent.source,
+			task,
+			exitCode: 1,
+			messages: [],
+			stderr:
+				`Agent "${agentName}" requests extensions that do not resolve under ${path.join(getAgentDir(), "extensions")}: ` +
+				`${agent.missingExtensions.join(", ")}. Fix the \`extensions:\` frontmatter in ${agent.filePath}.`,
+			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
+			step,
+		};
+	}
+
+	const args: string[] = ["--mode", "json", "-p", "--no-extensions"];
 	if (agent.model) args.push("--model", agent.model);
 	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));
+	for (const extensionPath of agent.extensionPaths ?? []) args.push("-e", extensionPath);
+
+	// A real session, so a child that fails or returns the wrong shape can be
+	// opened afterwards. Choosing the id here means the parent never has to parse
+	// it back out of the child's output.
+	const sessionId = randomUUID();
+	args.push("--session-dir", sessionDir, "--session-id", sessionId);
 
 	let tmpPromptDir: string | null = null;
 	let tmpPromptPath: string | null = null;
@@ -296,15 +541,21 @@ async function runSingleAgent(
 		agent: agentName,
 		agentSource: agent.source,
 		task,
-		exitCode: 0,
+		// Must start as RUNNING: this object is streamed into the live details on
+		// every update, so a 0 here renders a green check while the child is still
+		// going and makes a hung fanout look finished.
+		exitCode: RUNNING,
 		messages: [],
 		stderr: "",
 		usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
 		model: agent.model,
 		step,
+		sessionId,
+		startedAt: Date.now(),
 	};
 
 	const emitUpdate = () => {
+		currentResult.lastActivityAt = Date.now();
 		if (onUpdate) {
 			onUpdate({
 				content: [{ type: "text", text: getFinalOutput(currentResult.messages) || "(running...)" }],
@@ -323,6 +574,8 @@ async function runSingleAgent(
 
 		args.push(`Task: ${task}`);
 		let wasAborted = false;
+		let timedOut = false;
+		let wedgedAfterSettle = false;
 
 		const exitCode = await new Promise<number>((resolve) => {
 			const invocation = getPiInvocation(args);
@@ -330,8 +583,61 @@ async function runSingleAgent(
 				cwd: cwd ?? defaultCwd,
 				shell: false,
 				stdio: ["ignore", "pipe", "pipe"],
+				env: { ...process.env, [SUBAGENT_DEPTH_ENV]: String(currentSubagentDepth() + 1) },
 			});
 			let buffer = "";
+			let idleTimer: ReturnType<typeof setTimeout> | undefined;
+			let killTimer: ReturnType<typeof setTimeout> | undefined;
+			let settledTimer: ReturnType<typeof setTimeout> | undefined;
+			let lastCpuSeconds = 0;
+
+			// `proc.killed` only records that a signal was delivered, not that the
+			// child died, so it can never gate the escalation to SIGKILL.
+			const hasExited = () => proc.exitCode !== null || proc.signalCode !== null;
+
+			const terminate = () => {
+				proc.kill("SIGTERM");
+				killTimer = setTimeout(() => {
+					if (!hasExited()) proc.kill("SIGKILL");
+				}, KILL_GRACE_MS);
+			};
+
+			const armIdleTimer = () => {
+				clearTimeout(idleTimer);
+				idleTimer = setTimeout(() => {
+					// Silent, but is it working? A child running a long bash command
+					// emits nothing while its tree burns CPU; a wedged one burns none.
+					const cpuNow = treeCpuSeconds(proc.pid ?? -1);
+					if (cpuNow > lastCpuSeconds + LIVENESS_CPU_EPSILON_SECONDS) {
+						lastCpuSeconds = cpuNow;
+						armIdleTimer();
+						return;
+					}
+					timedOut = true;
+					terminate();
+				}, STDOUT_IDLE_TIMEOUT_MS);
+			};
+
+			/**
+			 * The child says it is done. Anything but a prompt exit now is the hang,
+			 * so stop waiting on stdout and give it only a short grace period.
+			 */
+			const armSettledGrace = () => {
+				if (settledTimer) return;
+				clearTimeout(idleTimer);
+				settledTimer = setTimeout(() => {
+					wedgedAfterSettle = true;
+					terminate();
+				}, SETTLED_EXIT_GRACE_MS);
+			};
+
+			const clearTimers = () => {
+				clearTimeout(idleTimer);
+				clearTimeout(killTimer);
+				clearTimeout(settledTimer);
+			};
+
+			armIdleTimer();
 
 			const processLine = (line: string) => {
 				if (!line.trim()) return;
@@ -340,6 +646,10 @@ async function runSingleAgent(
 					event = JSON.parse(line);
 				} catch {
 					return;
+				}
+
+				if (event.type === "agent_settled" || event.type === "agent_end") {
+					armSettledGrace();
 				}
 
 				if (event.type === "message_end" && event.message) {
@@ -371,6 +681,9 @@ async function runSingleAgent(
 			};
 
 			proc.stdout.on("data", (data) => {
+				// Keep parsing output either way; just don't resurrect the idle path
+				// once the shorter post-settle grace is running.
+				if (!settledTimer) armIdleTimer();
 				buffer += data.toString();
 				const lines = buffer.split("\n");
 				buffer = lines.pop() || "";
@@ -378,25 +691,31 @@ async function runSingleAgent(
 			});
 
 			proc.stderr.on("data", (data) => {
-				currentResult.stderr += data.toString();
+				const kept = data
+					.toString()
+					.split("\n")
+					.filter((line: string) => !BENIGN_SESSION_WARNING.test(line.trim()))
+					.join("\n");
+				currentResult.stderr += kept;
 			});
 
-			proc.on("close", (code) => {
+			proc.on("close", (code, signalCode) => {
+				clearTimers();
 				if (buffer.trim()) processLine(buffer);
-				resolve(code ?? 0);
+				// A signalled child reports a null code; resolving that as 0 would
+				// report a killed or aborted subagent as a success.
+				resolve(code ?? (signalCode ? 137 : 0));
 			});
 
 			proc.on("error", () => {
+				clearTimers();
 				resolve(1);
 			});
 
 			if (signal) {
 				const killProc = () => {
 					wasAborted = true;
-					proc.kill("SIGTERM");
-					setTimeout(() => {
-						if (!proc.killed) proc.kill("SIGKILL");
-					}, 5000);
+					terminate();
 				};
 				if (signal.aborted) killProc();
 				else signal.addEventListener("abort", killProc, { once: true });
@@ -404,7 +723,16 @@ async function runSingleAgent(
 		});
 
 		currentResult.exitCode = exitCode;
+		currentResult.sessionFile = findSessionFile(sessionDir, sessionId);
 		if (wasAborted) throw new Error("Subagent was aborted");
+		if (timedOut) {
+			if (currentResult.exitCode === 0) currentResult.exitCode = 124;
+			currentResult.note = `[subagent] Killed after ${STDOUT_IDLE_TIMEOUT_MS / 60000} minutes with no output and no CPU activity across its process tree.`;
+		}
+		if (wedgedAfterSettle) {
+			if (currentResult.exitCode === 0) currentResult.exitCode = 124;
+			currentResult.note = `[subagent] Reported its turn finished but did not exit within ${SETTLED_EXIT_GRACE_MS / 1000}s, so it was killed. Any output above is complete; something it spawned was holding the process open.`;
+		}
 		return currentResult;
 	} finally {
 		if (tmpPromptPath)
@@ -496,6 +824,31 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
+			const depth = currentSubagentDepth();
+			if (depth >= MAX_SUBAGENT_DEPTH) {
+				return {
+					content: [
+						{
+							type: "text",
+							text:
+								`Subagent nesting limit reached (depth ${depth} of ${MAX_SUBAGENT_DEPTH}). ` +
+								`Do this work yourself in the current context instead of delegating it further.`,
+						},
+					],
+					details: makeDetails(hasChain ? "chain" : hasTasks ? "parallel" : "single")([]),
+					isError: true,
+				};
+			}
+
+			const sessionDir = path.join(subagentSessionsRoot(), parentSessionId(ctx));
+			try {
+				fs.mkdirSync(sessionDir, { recursive: true });
+			} catch {
+				// pi creates it too; a failure here surfaces as a child error.
+			}
+			pruneOldSubagentSessions();
+
+
 			if ((agentScope === "project" || agentScope === "both") && confirmProjectAgents && ctx.hasUI) {
 				const requestedAgentNames = new Set<string>();
 				if (params.chain) for (const step of params.chain) requestedAgentNames.add(step.agent);
@@ -554,6 +907,7 @@ export default function (pi: ExtensionAPI) {
 						signal,
 						chainUpdate,
 						makeDetails("chain"),
+						sessionDir,
 					);
 					results.push(result);
 
@@ -595,17 +949,18 @@ export default function (pi: ExtensionAPI) {
 						agent: params.tasks[i].agent,
 						agentSource: "unknown",
 						task: params.tasks[i].task,
-						exitCode: -1, // -1 = still running
+						exitCode: RUNNING,
 						messages: [],
 						stderr: "",
 						usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
+						startedAt: Date.now(),
 					};
 				}
 
 				const emitParallelUpdate = () => {
 					if (onUpdate) {
-						const running = allResults.filter((r) => r.exitCode === -1).length;
-						const done = allResults.filter((r) => r.exitCode !== -1).length;
+						const running = allResults.filter((r) => r.exitCode === RUNNING).length;
+						const done = allResults.filter((r) => r.exitCode !== RUNNING).length;
 						onUpdate({
 							content: [
 								{ type: "text", text: `Parallel: ${done}/${allResults.length} done, ${running} running...` },
@@ -632,6 +987,7 @@ export default function (pi: ExtensionAPI) {
 							}
 						},
 						makeDetails("parallel"),
+						sessionDir,
 					);
 					allResults[index] = result;
 					emitParallelUpdate();
@@ -644,7 +1000,7 @@ export default function (pi: ExtensionAPI) {
 					const status = isFailedResult(r)
 						? `failed${r.stopReason && r.stopReason !== "end" ? ` (${r.stopReason})` : ""}`
 						: "completed";
-					return `### [${r.agent}] ${status}\n\n${output}`;
+					return `### [${r.agent}] ${status}\n\n${output}${transcriptNote(r)}`;
 				});
 				return {
 					content: [
@@ -668,12 +1024,13 @@ export default function (pi: ExtensionAPI) {
 					signal,
 					onUpdate,
 					makeDetails("single"),
+					sessionDir,
 				);
 				const isError = isFailedResult(result);
 				if (isError) {
 					const errorMsg = getResultOutput(result);
 					return {
-						content: [{ type: "text", text: `Agent ${result.stopReason || "failed"}: ${errorMsg}` }],
+						content: [{ type: "text", text: `Agent ${result.stopReason || "failed"}: ${errorMsg}${transcriptNote(result)}` }],
 						details: makeDetails("single")([result]),
 						isError: true,
 					};
@@ -833,7 +1190,12 @@ export default function (pi: ExtensionAPI) {
 
 			if (details.mode === "chain") {
 				const successCount = details.results.filter((r) => r.exitCode === 0).length;
-				const icon = successCount === details.results.length ? theme.fg("success", "✓") : theme.fg("error", "✗");
+				const stillRunning = details.results.some((r) => r.exitCode === RUNNING);
+				const icon = stillRunning
+					? theme.fg("warning", "⏳")
+					: successCount === details.results.length
+						? theme.fg("success", "✓")
+						: theme.fg("error", "✗");
 
 				if (expanded) {
 					const container = new Container();
@@ -849,7 +1211,12 @@ export default function (pi: ExtensionAPI) {
 					);
 
 					for (const r of details.results) {
-						const rIcon = r.exitCode === 0 ? theme.fg("success", "✓") : theme.fg("error", "✗");
+						const rIcon =
+							r.exitCode === RUNNING
+								? theme.fg("warning", "⏳")
+								: r.exitCode === 0
+									? theme.fg("success", "✓")
+									: theme.fg("error", "✗");
 						const displayItems = getDisplayItems(r.messages);
 						const finalOutput = getFinalOutput(r.messages);
 
@@ -901,7 +1268,12 @@ export default function (pi: ExtensionAPI) {
 					theme.fg("toolTitle", theme.bold("chain ")) +
 					theme.fg("accent", `${successCount}/${details.results.length} steps`);
 				for (const r of details.results) {
-					const rIcon = r.exitCode === 0 ? theme.fg("success", "✓") : theme.fg("error", "✗");
+					const rIcon =
+						r.exitCode === RUNNING
+							? theme.fg("warning", "⏳")
+							: r.exitCode === 0
+								? theme.fg("success", "✓")
+								: theme.fg("error", "✗");
 					const displayItems = getDisplayItems(r.messages);
 					text += `\n\n${theme.fg("muted", `─── Step ${r.step}: `)}${theme.fg("accent", r.agent)} ${rIcon}`;
 					if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
@@ -914,9 +1286,9 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			if (details.mode === "parallel") {
-				const running = details.results.filter((r) => r.exitCode === -1).length;
-				const successCount = details.results.filter((r) => r.exitCode !== -1 && !isFailedResult(r)).length;
-				const failCount = details.results.filter((r) => r.exitCode !== -1 && isFailedResult(r)).length;
+				const running = details.results.filter((r) => r.exitCode === RUNNING).length;
+				const successCount = details.results.filter((r) => r.exitCode !== RUNNING && !isFailedResult(r)).length;
+				const failCount = details.results.filter((r) => r.exitCode !== RUNNING && isFailedResult(r)).length;
 				const isRunning = running > 0;
 				const icon = isRunning
 					? theme.fg("warning", "⏳")
@@ -924,8 +1296,8 @@ export default function (pi: ExtensionAPI) {
 						? theme.fg("warning", "◐")
 						: theme.fg("success", "✓");
 				const status = isRunning
-					? `${successCount + failCount}/${details.results.length} done, ${running} running`
-					: `${successCount}/${details.results.length} tasks`;
+					? `${successCount + failCount}/${details.results.length} done, ${running} running · ${totalElapsed(details.results)}`
+					: `${successCount}/${details.results.length} tasks · ${totalElapsed(details.results)}`;
 
 				if (expanded && !isRunning) {
 					const container = new Container();
@@ -983,15 +1355,15 @@ export default function (pi: ExtensionAPI) {
 				let text = `${icon} ${theme.fg("toolTitle", theme.bold("parallel "))}${theme.fg("accent", status)}`;
 				for (const r of details.results) {
 					const rIcon =
-						r.exitCode === -1
+						r.exitCode === RUNNING
 							? theme.fg("warning", "⏳")
 							: isFailedResult(r)
 								? theme.fg("error", "✗")
 								: theme.fg("success", "✓");
 					const displayItems = getDisplayItems(r.messages);
-					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", r.agent)} ${rIcon}`;
+					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", r.agent)} ${rIcon}${theme.fg("dim", runningSuffix(r))}`;
 					if (displayItems.length === 0)
-						text += `\n${theme.fg("muted", r.exitCode === -1 ? "(running...)" : "(no output)")}`;
+						text += `\n${theme.fg("muted", r.exitCode === RUNNING ? "(running...)" : "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;
 				}
 				if (!isRunning) {

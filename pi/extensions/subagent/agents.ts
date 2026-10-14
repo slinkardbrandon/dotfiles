@@ -8,11 +8,47 @@ import { getAgentDir, parseFrontmatter } from "@earendil-works/pi-coding-agent";
 
 export type AgentScope = "user" | "project" | "both";
 
+/**
+ * Extensions a subagent may load, resolved to absolute paths.
+ *
+ * Children run with --no-extensions (see runSingleAgent), so an agent opts back
+ * in by name through frontmatter: `extensions: subagent, jira`. Names resolve
+ * against the user extensions directory only, which is what keeps the one
+ * extension that wedges a child -- the mempalace-pi npm package, which spawns a
+ * long-lived mempalace-mcp it does not unref -- structurally unreachable: it is
+ * a configured package, not a file in that directory.
+ */
+const EXTENSION_ENTRY_CANDIDATES = [
+	(dir: string, name: string) => path.join(dir, name, "index.ts"),
+	(dir: string, name: string) => path.join(dir, name, "index.js"),
+	(dir: string, name: string) => path.join(dir, name, "index.mjs"),
+	(dir: string, name: string) => path.join(dir, `${name}.ts`),
+	(dir: string, name: string) => path.join(dir, `${name}.js`),
+	(dir: string, name: string) => path.join(dir, `${name}.mjs`),
+];
+
+function resolveExtensionPath(name: string): string | null {
+	const dir = path.join(getAgentDir(), "extensions");
+	for (const candidate of EXTENSION_ENTRY_CANDIDATES) {
+		const filePath = candidate(dir, name);
+		try {
+			if (fs.statSync(filePath).isFile()) return filePath;
+		} catch {
+			// Try the next shape.
+		}
+	}
+	return null;
+}
+
 export interface AgentConfig {
 	name: string;
 	description: string;
 	tools?: string[];
 	model?: string;
+	/** Extension names from frontmatter, resolved to absolute paths. */
+	extensionPaths?: string[];
+	/** Names that matched no file, so the caller can say so instead of silently dropping them. */
+	missingExtensions?: string[];
 	systemPrompt: string;
 	source: "user" | "project";
 	filePath: string;
@@ -60,11 +96,25 @@ function loadAgentsFromDir(dir: string, source: "user" | "project"): AgentConfig
 			.map((t: string) => t.trim())
 			.filter(Boolean);
 
+		const extensionNames = frontmatter.extensions
+			?.split(",")
+			.map((e: string) => e.trim())
+			.filter(Boolean);
+		const extensionPaths: string[] = [];
+		const missingExtensions: string[] = [];
+		for (const extensionName of extensionNames ?? []) {
+			const resolved = resolveExtensionPath(extensionName);
+			if (resolved) extensionPaths.push(resolved);
+			else missingExtensions.push(extensionName);
+		}
+
 		agents.push({
 			name: frontmatter.name,
 			description: frontmatter.description,
 			tools: tools && tools.length > 0 ? tools : undefined,
 			model: frontmatter.model,
+			extensionPaths: extensionPaths.length > 0 ? extensionPaths : undefined,
+			missingExtensions: missingExtensions.length > 0 ? missingExtensions : undefined,
 			systemPrompt: body,
 			source,
 			filePath,
