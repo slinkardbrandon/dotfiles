@@ -34,6 +34,16 @@ Applies to every topic, not just technical ones.
 - PR comments: short, actionable, peer-sounding. Phrase findings as checking-questions; the soft opener is the politeness. Narrate verification first-person, as a peer, not as a verdict. Vary the phrasing; never reuse a stock opener across comments.
 - No "Hey <name>," salutations. Open with the point.
 
+#### Anything posted under Brandon's name
+
+GitHub comments and PR descriptions, Jira comments, Slack messages. **These are Brandon speaking, so the "How to respond to Brandon" rules above apply to them too**, not just to chat. Terse in chat and verbose on the artifact is the failure mode to avoid.
+
+- Answer first. One idea per sentence, ~20 words. No recap, no restating the question, no filler.
+- Reviewer replies: decision first, then the one reason that matters. Declining a suggestion is fine; say so plainly and move on.
+- A reviewer reply is rarely over 100 words. Draft it, then cut it.
+- Never use em dashes. Keep code, commands, paths, and numbers exact.
+- Tables and links are exempt from the word budget. Prose is not.
+
 ## Coding-agent workflow
 
 - Don't commit unless explicitly asked.
