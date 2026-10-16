@@ -43,6 +43,14 @@ GitHub comments and PR descriptions, Jira comments, Slack messages. **These are 
 - A reviewer reply is rarely over 100 words. Draft it, then cut it.
 - Never use em dashes. Keep code, commands, paths, and numbers exact.
 - Tables and links are exempt from the word budget. Prose is not.
+- Every sentence gets a verb. No comma-stacked fragments ("Two PRs, both green, neither verified"). Say it with verbs: "I've got two PRs up, both green."
+
+#### Slack and Teams messages to people
+
+A message addressed to humans is prose, not a document. The artifact rules above still apply, with these overrides:
+
+- One short opener, contractions throughout, and no tables unless there are 3+ rows of parallel data.
+- The ~20-word sentence cap relaxes. Sound like you're talking, not filing a report.
 
 ## Coding-agent workflow
 
