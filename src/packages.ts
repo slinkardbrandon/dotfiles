@@ -127,7 +127,11 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
   // Windows build through winget interop; a native Linux desktop gets the .deb.
   openwhispr: async () => {
     if (isWSL()) {
-      await installOpenWhisprOnWindows();
+      await installOnWindowsHost(
+        "OpenWhispr",
+        "OpenWhispr.OpenWhispr",
+        "https://github.com/OpenWhispr/openwhispr/releases/latest",
+      );
       return;
     }
     if (await commandExists("openwhispr")) return;
@@ -140,6 +144,17 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
        sudo apt install -y /tmp/openwhispr.deb && \
        rm /tmp/openwhispr.deb`,
     ]);
+  },
+  // Under WSL the terminal is Windows Alacritty, which reads the config that
+  // theme.ts mirrors into %APPDATA%. A native Linux desktop brings its own
+  // terminal, so this is WSL-only.
+  alacritty: async () => {
+    if (!isWSL()) return;
+    await installOnWindowsHost(
+      "Alacritty",
+      "Alacritty.Alacritty",
+      "https://github.com/alacritty/alacritty/releases/latest",
+    );
   },
   mempalace: async () => {
     if (await commandExists("mempalace")) return;
@@ -158,17 +173,14 @@ const LINUX_SPECIAL_INSTALL: Record<string, () => Promise<void>> = {
   },
 };
 
-// winget package id for the Windows OpenWhispr build.
-const OPENWHISPR_WINGET_ID = "OpenWhispr.OpenWhispr";
-
-// Install OpenWhispr on the Windows host from inside WSL. Best-effort: with
-// interop off there is no winget.exe to call, so warn and point at the
+// Install a Windows app on the host from inside WSL via winget. Best-effort:
+// with interop off there is no winget.exe to call, so warn and point at the
 // installer rather than failing the whole package step.
-async function installOpenWhisprOnWindows() {
+async function installOnWindowsHost(name: string, wingetId: string, manualUrl: string) {
   try {
-    const listed = await runQuiet(["winget.exe", "list", "--exact", "--id", OPENWHISPR_WINGET_ID]);
-    if (listed.includes(OPENWHISPR_WINGET_ID)) {
-      log.success("OpenWhispr already installed on the Windows host");
+    const listed = await runQuiet(["winget.exe", "list", "--exact", "--id", wingetId]);
+    if (listed.includes(wingetId)) {
+      log.success(`${name} already installed on the Windows host`);
       return;
     }
   } catch {
@@ -176,22 +188,64 @@ async function installOpenWhisprOnWindows() {
     // is off — fall through and let the install attempt say which it was.
   }
 
-  log.info("Installing OpenWhispr on the Windows host (winget)...");
+  log.info(`Installing ${name} on the Windows host (winget)...`);
   try {
     await run([
       "winget.exe",
       "install",
       "--exact",
       "--id",
-      OPENWHISPR_WINGET_ID,
+      wingetId,
       "--accept-package-agreements",
       "--accept-source-agreements",
     ]);
-    log.success("OpenWhispr installed on the Windows host");
+    log.success(`${name} installed on the Windows host`);
   } catch {
-    log.warning(
-      "Could not reach winget from WSL — install OpenWhispr on Windows manually: https://github.com/OpenWhispr/openwhispr/releases/latest",
-    );
+    log.warning(`Could not reach winget from WSL; install ${name} on Windows manually: ${manualUrl}`);
+  }
+}
+
+// Per-user font install on the Windows host. Copying into the user font dir
+// and writing the HKCU registry entry is not enough on its own: Windows only
+// loads those at sign-in, so a running session (and every Alacritty launched
+// from it) reports the font as missing. AddFontResourceW + WM_FONTCHANGE loads
+// them now. Files already present are skipped, since a loaded font is locked
+// and overwriting it fails.
+const WINDOWS_FONT_INSTALL_PS = `
+$ErrorActionPreference = 'Stop'
+$dst = Join-Path $env:LOCALAPPDATA 'Microsoft\\Windows\\Fonts'
+New-Item -ItemType Directory -Force $dst | Out-Null
+$reg = 'HKCU:\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts'
+Add-Type -Namespace Dotfiles -Name Fonts -MemberDefinition @'
+[DllImport("gdi32.dll", CharSet=CharSet.Unicode)] public static extern int AddFontResourceW(string f);
+[DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr SendMessageTimeoutW(IntPtr h, uint m, IntPtr w, IntPtr l, uint fl, uint t, out IntPtr r);
+'@
+$files = @(Get-ChildItem $src -Filter 'FiraCodeNerdFontMono-*.ttf')
+if ($files.Count -eq 0) { throw "no FiraCodeNerdFontMono-*.ttf in $src" }
+foreach ($f in $files) {
+  $target = Join-Path $dst $f.Name
+  if (-not (Test-Path $target)) { Copy-Item $f.FullName $target }
+  $name = ($f.BaseName -replace '^FiraCodeNerdFontMono-', 'FiraCode Nerd Font Mono ') + ' (TrueType)'
+  New-ItemProperty -Path $reg -Name $name -Value $target -PropertyType String -Force | Out-Null
+  [void][Dotfiles.Fonts]::AddFontResourceW($target)
+}
+$r = [IntPtr]::Zero
+[void][Dotfiles.Fonts]::SendMessageTimeoutW([IntPtr]0xffff, 0x001D, [IntPtr]::Zero, [IntPtr]::Zero, 2, 5000, [ref]$r)
+`;
+
+// Windows Alacritty renders with Windows fonts, so the Nerd Font installed
+// into WSL is invisible to it. Mirror the Mono variant onto the host.
+async function installWindowsFonts(linuxFontDir: string) {
+  log.info("Installing FiraCode Nerd Font on the Windows host...");
+  try {
+    const winSrc = await runQuiet(["wslpath", "-w", linuxFontDir]);
+    const script = `$src = '${winSrc.replace(/'/g, "''")}'\n${WINDOWS_FONT_INSTALL_PS}`;
+    // -EncodedCommand (UTF-16LE base64) sidesteps quoting across the interop boundary.
+    const encoded = Buffer.from(script, "utf16le").toString("base64");
+    await runQuiet(["powershell.exe", "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]);
+    log.success("FiraCode Nerd Font installed on the Windows host");
+  } catch (err) {
+    log.warning(`Could not install FiraCode Nerd Font on Windows: ${err}`);
   }
 }
 
@@ -297,6 +351,11 @@ async function installLinuxFonts() {
     log.success("FiraCode Nerd Font installed");
   } catch {
     log.warning("Failed to install FiraCode Nerd Font");
+    return;
+  }
+
+  if (isWSL()) {
+    await installWindowsFonts(`${fontDir}/FiraCode`);
   }
 }
 
