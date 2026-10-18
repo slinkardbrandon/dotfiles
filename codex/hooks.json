@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/dotfiles/agents/brevity-hook.mjs",
+            "command": "bun ~/dotfiles/agents/brevity-hook.mjs",
             "timeout": 5
           }
         ]

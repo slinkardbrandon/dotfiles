@@ -72,14 +72,23 @@ async function main() {
 
   // Done
   console.log(chalk.bold.green("\n  Setup complete!\n"));
-  console.log("  Next steps:");
-  console.log("  1. Restart your terminal or run: exec fish");
-  console.log("  2. Fisher will auto-install plugins on first Fish launch");
+  const nextSteps = [
+    "Restart your terminal or run: exec fish",
+    "Fisher will auto-install plugins on first Fish launch",
+  ];
   if (platform === "macos") {
-    console.log("  3. Grant accessibility permissions for Rectangle");
-    console.log("  4. Sign in to 1Password, VS Code, Chrome");
+    nextSteps.push("Grant accessibility permissions for Rectangle", "Sign in to 1Password, VS Code, Chrome");
   }
+  console.log("  Next steps:");
+  nextSteps.forEach((step, i) => console.log(`  ${i + 1}. ${step}`));
   console.log();
+
+  // Live reload only watches config files that existed at launch, and fonts
+  // are resolved once at startup, so an Alacritty opened before setup keeps
+  // its defaults (or a missing-font error) until it is fully restarted.
+  if (wsl) {
+    console.log(chalk.bold.yellow("  Close every Alacritty window and reopen it to pick up the new config and fonts.\n"));
+  }
 }
 
 main().catch((err) => {
