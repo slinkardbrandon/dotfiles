@@ -161,6 +161,8 @@ Run `bun run ai-setup` to seed/migrate without overwriting existing local config
 
 Directory entries are copy-once, but `seedMissingChildren()` still delivers **new** shared children (e.g. a newly allowlisted extension) to a machine that already has the directory. Existing files are never touched — updating one requires `ai-setup -- --force`.
 
+`setupAiHarnessConfig()` also clones slynk-toolkit to `~/personal/slynk-toolkit` and runs its installer in `--link` mode on every sync. That installer owns the Claude `SessionStart` hook and writes a machine-specific absolute path, so **never add the slynk hook to `claude/settings.json`**. It resolves node from nvm.fish directly and runs `nvm install lts` if none exists.
+
 New Pi agents/extensions are machine-local by default via `pi/agents/.gitignore` and `pi/extensions/.gitignore`. To share one across machines, add an explicit allowlist entry in the relevant `.gitignore` and commit the file. Generated repo-specific nudges/hooks do **not** belong in dotfiles.
 
 ## AI memory (mempalace)
@@ -187,6 +189,7 @@ These will bite you if you forget them:
 - **npm `bin-links` must be `false`** — WSL2 can't create symlinks in `/mnt/c` filesystems; npm blows up creating bin links.
 - **Mason can't install npm-based LSP tools** — use `bun install -g` instead. The packages module does this automatically in `installPackages()` on Linux.
 - **`tree-sitter-cli` requires Node** — install via bun, but needs `nvm install lts` first since bun shells don't inherit nvm's node.
+- **Dotfiles-owned agent hooks run with `bun`, never `node`**: `node` only exists after `nvm install lts` and only on PATH once interactive fish activates it, so a fresh machine or a GUI-launched harness has none. Bun is guaranteed by `bootstrap.sh` on both platforms.
 - **`~/.local/bin` must be explicit in fish PATH** — tmux panes don't inherit the parent's PATH; lazygit, delta, etc. live in `~/.local/bin` on Linux and won't be found otherwise.
 - **GUI desktop apps belong on the Windows host, not in WSLg** — a global-hotkey app like OpenWhispr acts on whichever session owns the focused window, which is Windows. `LINUX_SPECIAL_INSTALL.openwhispr` installs the `.deb` on a native Linux desktop but shells `winget.exe` under `isWSL()`. If interop is off, it warns and skips.
 - **Windows Alacritty** runs as a native Windows process and reads `%APPDATA%\alacritty\alacritty.toml`, not the WSL symlink. `generateConfigs()` mirrors rendered fragments there via `wslpath` + `cmd.exe` when `isWSL()` is true. If interop is off, it warns and skips — it never breaks a sync.

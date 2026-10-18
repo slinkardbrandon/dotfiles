@@ -259,6 +259,7 @@ export async function setupAiHarnessConfig(options: SetupAiHarnessOptions = {}) 
   if (backedUp && backupDir) log.info(`AI harness backup: ${backupDir}`);
 
   await registerMempalaceMcp();
+  await installSlynkToolkit();
 }
 
 // ─── mempalace MCP registration ──────────────────────────────────────────────
@@ -348,5 +349,66 @@ async function registerMempalaceWithClaude() {
     log.success("Claude Code: registered mempalace MCP");
   } catch {
     log.warning("Could not register mempalace with Claude Code — run: claude mcp add --scope user mempalace -- mempalace-mcp");
+  }
+}
+
+// ─── slynk-toolkit ───────────────────────────────────────────────────────────
+//
+// slynk-toolkit's installer owns its Claude SessionStart hook and writes an
+// absolute path into ~/.claude/settings.json, so the hook must never live in
+// claude/settings.json. Cloning to the same place on every machine and running
+// the installer in --link mode keeps that path predictable and skill edits live.
+// The installer is idempotent, so every sync re-runs it.
+const SLYNK_REPO = "https://github.com/slinkardbrandon/slynk-toolkit.git";
+const SLYNK_DIR = join(HOME, "personal", "slynk-toolkit");
+const NVM_DIR = process.env.nvm_data ?? join(HOME, ".local", "share", "nvm");
+
+// Newest nvm.fish-installed node, mirroring fish/conf.d/nvm_auto_init.fish.
+// Bun doesn't inherit fish's nvm activation, so PATH alone can't be trusted.
+function findNvmNode() {
+  if (!existsSync(NVM_DIR)) return undefined;
+  const versions = readdirSync(NVM_DIR)
+    .filter((name) => name.startsWith("v") && existsSync(join(NVM_DIR, name, "bin", "node")))
+    .sort((a, b) => Bun.semver.order(a.slice(1), b.slice(1)));
+  const latest = versions.at(-1);
+  return latest ? join(NVM_DIR, latest, "bin", "node") : undefined;
+}
+
+async function resolveNode() {
+  const nvmNode = findNvmNode();
+  if (nvmNode) return nvmNode;
+  if (await commandExists("node")) return "node";
+
+  log.info("No node found, installing LTS via nvm.fish");
+  await run(["fish", "-c", "nvm install lts"]);
+  return findNvmNode();
+}
+
+async function installSlynkToolkit() {
+  if (!existsSync(SLYNK_DIR)) {
+    try {
+      await run(["git", "clone", SLYNK_REPO, SLYNK_DIR]);
+    } catch {
+      log.warning(`Could not clone slynk-toolkit, run: git clone ${SLYNK_REPO} ${SLYNK_DIR}`);
+      return;
+    }
+  }
+
+  let node: string | undefined;
+  try {
+    node = await resolveNode();
+  } catch {
+    // Handled below: nvm.fish may not be installed until fisher's first run.
+  }
+  if (!node) {
+    log.warning("slynk-toolkit: node unavailable, skipping install. Run: nvm install lts");
+    return;
+  }
+
+  try {
+    await runQuiet([node, join(SLYNK_DIR, "bin", "slynk-toolkit.mjs"), "--link"]);
+    log.success(`slynk-toolkit: linked from ${SLYNK_DIR}`);
+  } catch {
+    log.warning(`slynk-toolkit: install failed. Run: node ${SLYNK_DIR}/bin/slynk-toolkit.mjs --link`);
   }
 }

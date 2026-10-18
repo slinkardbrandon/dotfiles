@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Per-prompt hook for Claude Code and Codex (UserPromptSubmit): plain stdout is
 // added to model context in both. Text lives in brevity.md next to this file.
 import { readFileSync } from "node:fs";

@@ -41,19 +41,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/dotfiles/agents/brevity-hook.mjs",
+            "command": "bun ~/dotfiles/agents/brevity-hook.mjs",
             "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"/private/tmp/slynk-toolkit/hooks/bootstrap-hook.mjs\"",
-            "timeout": 10
           }
         ]
       }
