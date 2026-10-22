@@ -35,6 +35,12 @@ const AI_HARNESS_ENTRIES: AiHarnessEntry[] = [
     kind: "file",
   },
   {
+    name: "Pi MCP servers",
+    source: join(DOTFILES_DIR, "pi", "mcp.json"),
+    target: join(HOME, ".pi", "agent", "mcp.json"),
+    kind: "file",
+  },
+  {
     name: "Pi extensions",
     source: join(DOTFILES_DIR, "pi", "extensions"),
     target: join(HOME, ".pi", "agent", "extensions"),
