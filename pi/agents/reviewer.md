@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: General code quality and slop detector — looks for lazy patterns, inconsistency, and half-baked implementation
-tools: read, grep, find, ls, bash
+tools: read, grep, find, ls, bash, atlassian-jira_search, atlassian-jira_get_issue, atlassian-jira_get_all_projects, atlassian-jira_get_agile_boards, atlassian-jira_get_sprints_from_board
 model: claude-sonnet-5.5
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Creates implementation plans from context and requirements
-tools: read, grep, find, ls
+tools: read, grep, find, ls, atlassian-jira_search, atlassian-jira_get_issue, atlassian-jira_get_all_projects, atlassian-jira_get_agile_boards, atlassian-jira_get_sprints_from_board, mempalace_search, mempalace_kg_query
 model: claude-sonnet-5.5
 ---
 

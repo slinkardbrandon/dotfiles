@@ -1,7 +1,7 @@
 ---
 name: security
 description: Security-focused code reviewer — OWASP Top 10, Node.js-specific vulnerabilities, dependency risks, and bad patterns that introduce attack surface
-tools: read, grep, find, ls, bash
+tools: read, grep, find, ls, bash, atlassian-jira_search, atlassian-jira_get_issue, atlassian-jira_get_all_projects, atlassian-jira_get_agile_boards, atlassian-jira_get_sprints_from_board
 model: claude-sonnet-5.5
 ---
 

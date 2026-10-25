@@ -1,7 +1,7 @@
 ---
 name: researcher
 description: Web researcher — searches and reads web pages, synthesizes findings across multiple sources to answer technical questions
-tools: bash
+tools: bash, atlassian-jira_search, atlassian-jira_get_issue, atlassian-jira_get_all_projects, atlassian-jira_get_agile_boards, atlassian-jira_get_sprints_from_board
 model: claude-haiku-4.5
 ---
 

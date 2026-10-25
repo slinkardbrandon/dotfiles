@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Fast codebase recon that returns compressed context for handoff to other agents
-tools: read, grep, find, ls, bash
+tools: read, grep, find, ls, bash, atlassian-jira_search, atlassian-jira_get_issue, atlassian-jira_get_all_projects, atlassian-jira_get_agile_boards, atlassian-jira_get_sprints_from_board, mempalace_search, mempalace_kg_query
 model: claude-haiku-4.5
 ---
 
