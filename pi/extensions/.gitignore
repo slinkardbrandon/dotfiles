@@ -4,6 +4,7 @@
 !.gitignore
 !statusline.ts
 !brevity.ts
+!goal.ts
 !jira/
 !jira/**
 !subagent/
