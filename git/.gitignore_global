@@ -208,3 +208,6 @@ mempalace.yaml
 # *.tar.gz
 # *.rar
 # *.7z
+
+# playwright-mcp session artifacts
+.playwright-mcp/

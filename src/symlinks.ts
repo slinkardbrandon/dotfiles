@@ -103,6 +103,16 @@ function getSymlinks(): SymlinkEntry[] {
     { source: join(DOTFILES_DIR, "claude", "CLAUDE.md"), target: join(home, ".copilot", "copilot-instructions.md") },
   );
 
+  // Claude subagent definitions. Authored content that I maintain, not a
+  // machine-divergent default, so it live-links like CLAUDE.md above. Linked as
+  // a directory so a new agent is versioned without touching this file. Keep
+  // these company-neutral: anything company specific belongs in a folder scoped
+  // CLAUDE.md.
+  links.push({
+    source: join(DOTFILES_DIR, "claude", "agents"),
+    target: join(home, ".claude", "agents"),
+  });
+
   // Pi keybindings/extensions/agents are copy-once AI harness defaults, not
   // symlinks. They are managed by setupAiHarnessConfig() so work and personal
   // machines can diverge safely.
