@@ -45,6 +45,7 @@ claude/*
 !claude/settings.json
 !claude/statusline.ts
 !claude/sync-usage.ts
+!claude/agents/
 !claude/hooks/
 !claude/sounds/
 .claude/
